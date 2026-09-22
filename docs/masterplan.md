@@ -111,7 +111,7 @@ Notes against the database-design rules in `CLAUDE.md`:
    sbf.church/messages.
 5. **Phase 4 — Accounts & notifications data model.** `profiles` and
    `notifications` tables, RLS policies, sign-up flow, admin
-   approve/reject UI, notify opt-in toggle. Notification *delivery* is
+   approve/reject UI, notify opt-in toggle. Notification _delivery_ is
    scoped separately once the mechanism is decided (may split into its own
    phase).
 6. **Phase 5 — Auth gate.** Wire up Supabase Google OAuth, gate all routes

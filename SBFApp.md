@@ -1,5 +1,6 @@
 This is an app for a local church named Sudbury Bible Fellowship or SBF for short.
 We want the app to have several features:
+
 1. Allow viewing of the SBF website (https://sbf.church/)
 2. Allow viewing of a calendar of events by month
 3. Quick access to playing messages from the SBF website (https://sbf.church/messages/)
