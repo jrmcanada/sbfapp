@@ -20,13 +20,9 @@ has an account; there's no anonymous/public browsing mode.
 Account flow: sign up → account sits pending → an admin approves or rejects
 it → only approved accounts can use the app.
 
-**Open question:** `CLAUDE.md`'s default guidance is to defer auth setup
-until deploy time and build features unauthenticated locally. But this
-app's core premise is "you must log in to use it" — login isn't a
-late-stage add-on here, it's the front door. Assumption for this plan:
-build the feature routes unauthenticated first (per `CLAUDE.md`'s default),
-then layer in the login gate + admin approval as its own phase before
-deploy. Flag if you want auth built earlier instead.
+Auth timing resolved 2026-09-24 — see Decisions: accounts, notifications,
+and the login-required gate are built together as one phase, using
+`CLAUDE.md`'s "unless I ask" exception to the deferred-auth default.
 
 ## Features (major pieces)
 
@@ -129,7 +125,7 @@ Notes against the database-design rules in `CLAUDE.md`:
   regardless: RLS allows public `SELECT` only, and the upload route writes
   via the server-only service-role client, so no anon/client role ever gets
   insert access. Real admin gating (who may reach the upload route at all)
-  lands with Phase 5 auth.
+  lands with Phase 4's auth gate.
 - 2026-09-23: Messages are scraped from sbf.church/messages' structured
   `data-*` row attributes, not stored in the app's DB and not
   admin-curated — unlike Calendar, the site's own data is good enough to
@@ -158,10 +154,14 @@ Notes against the database-design rules in `CLAUDE.md`:
   they'll silently never receive notifications. Delivery is fire-and-forget
   to every current `push_subscriptions` row — no per-notification tracking
   (see Data model notes).
-
-## Open questions (resolve before the relevant feature's spec.md)
-
-- **Auth timing** — see the open question under Users & roles above.
+- 2026-09-24: **Phases 4 and 5 merged into one phase** (accounts,
+  notifications, and the auth gate together), invoking `CLAUDE.md`'s
+  "unless I ask" exception to build Google OAuth now rather than at deploy
+  readiness. Forced by a hard dependency: `profiles.id` has a FK to
+  `auth.users`, so a real pending signup can't exist without real
+  Supabase Auth already wired up — there's no way to build/test the
+  approve/reject flow meaningfully otherwise. Confirmed with the human
+  before proceeding.
 
 ## Build order (phases)
 
@@ -175,18 +175,19 @@ Notes against the database-design rules in `CLAUDE.md`:
    Decisions), monthly calendar grid view.
 4. **Phase 3 — Messages.** Quick-access playback pulling from
    sbf.church/messages.
-5. **Phase 4 — Accounts & notifications.** `profiles`, `push_subscriptions`,
-   and `notifications` tables + RLS; sign-up flow; admin approve/reject UI;
-   PWA manifest + service worker; the push opt-in flow (including the iOS
-   "Add to Home Screen" explainer); admin compose-and-push UI. One phase,
-   not split — the data model and delivery mechanism are both already
-   decided, so there's no reason to build the tables now and the sending
-   logic later.
-6. **Phase 5 — Auth gate.** Wire up Supabase Google OAuth, gate all routes
-   server-side behind an approved account, rely on RLS for data access —
-   per `CLAUDE.md`'s deferred-auth rule, this lands last, right before
-   deploy readiness.
-7. **Phase 6 — Deploy.** Netlify adapter, env vars, first deploy — only
+5. **Phase 4 — Accounts, notifications & auth gate.** Merged 2026-09-24
+   (was two phases) — `profiles`, `push_subscriptions`, and `notifications`
+   tables + RLS; Google OAuth sign-in via Supabase Auth; sign-up + admin
+   approve/reject UI; PWA manifest + service worker; the push opt-in flow
+   (including the iOS "Add to Home Screen" explainer); admin
+   compose-and-push UI; **and** the login-required gate itself — every
+   route (website, calendar, messages) now requires an approved account,
+   server-side, relying on RLS for data access. Uses `CLAUDE.md`'s
+   "unless I ask" exception to build auth before deploy readiness, since
+   real signups can't exist without it (the `profiles` FK to `auth.users`
+   requires a real Supabase Auth user, and testing approve/reject
+   meaningfully needs the gate to actually matter).
+5. **Phase 5 — Deploy.** Netlify adapter, env vars, first deploy — only
    once every phase above is done, per `CLAUDE.md`.
 
 Each phase becomes one or more `spec.md` files as it's picked up; this plan
