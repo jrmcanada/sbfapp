@@ -2,12 +2,13 @@
 
 ## Current
 
-- **Feature:** Phase 2 — Calendar (`docs/specs/02-calendar/spec.md`)
-- **Branch:** `feat/calendar`
-- **Status:** built and verified (check, lint, 23 unit tests, 11 e2e tests
-  all pass; visually checked at 375px). Not yet merged to `master`.
-- **Next action:** merge `feat/calendar` to `master` (or open a PR once a
-  remote exists), then spec Phase 3 (Messages).
+- **Feature:** Phase 3 — Messages (`docs/specs/03-messages/spec.md`)
+- **Branch:** `feat/messages`
+- **Status:** built and verified (check, lint, 30 unit tests, 15 e2e tests
+  all pass; visually confirmed against the live site — real message titles
+  rendered). Not yet merged to `master`.
+- **Next action:** merge `feat/messages` to `master`, then spec Phase 4
+  (Accounts & notifications data model).
 
 ## Done
 
@@ -18,9 +19,31 @@
   linked from `/`. Built on `feat/website-view`, re-verified independently
   (check, lint, unit + e2e all pass) and merged to `master` (fast-forward,
   no PR — no GitHub remote configured yet). Commit `5444f3f`.
+- **Phase 2 — Calendar** (2026-09-23). `events` table + RLS, `/admin/events`
+  text-file upload, `/calendar` monthly grid. Built on `feat/calendar`,
+  verified (check, lint, 23 unit + 11 e2e tests, visual check at 375px —
+  caught and fixed a grid overflow bug) and merged to `master`
+  (fast-forward). Commit `6fa4e0d`.
 
 ## Decisions
 
+- 2026-09-23: **Messages fetch runs client-side, not server-side.**
+  Confirmed repeatedly (not a fluke) that sbf.church's Cloudflare bot
+  management blocks Node's `fetch()` and even a genuine headless-browser
+  request regardless of a matching User-Agent — TLS/fingerprint-level
+  detection, not a header check, so the originally-spec'd server-side
+  fetch would never have worked in production either (Netlify's servers
+  are Node too). sbf.church sends `Access-Control-Allow-Origin: *`,
+  explicitly permitting cross-origin browser reads, so the fetch runs in
+  the visitor's own browser (`+page.ts` with `ssr = false`) instead —
+  verified end-to-end against the live site, real titles rendered.
+  Bonus: this also made e2e tests properly mockable via `page.route()`,
+  which server-side fetches never were (see Phase 2's note below) — no
+  live-site or Cloudflare dependency in the test suite for this feature.
+- 2026-09-23: Messages are scraped (not iframed, not admin-entered) from
+  sbf.church/messages' structured `data-*` row attributes — direct MP3
+  URLs, no feed exists. Accepted risk: fragile to a site redesign, with no
+  admin fallback if it breaks (unlike Calendar).
 - 2026-09-23: **Calendar is app-owned data, not pulled from sbf.church.**
   Their "Upcoming Events" page has free-text dates and no feed — not
   machine-parseable. Instead: an `events` table (Supabase), an
@@ -71,5 +94,3 @@
 ## Open questions
 
 - Notification delivery mechanism (masterplan) — needed before Phase 4/5 notifications.
-- Messages integration mechanism — check per feature (Phase 3), same way
-  Phases 1–2 did.

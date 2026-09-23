@@ -9,6 +9,7 @@
 	<h1>Sudbury Bible Fellowship</h1>
 	<Button href={resolve('/website')}>View the website</Button>
 	<Button href={resolve('/calendar')}>View the calendar</Button>
+	<Button href={resolve('/messages')}>Listen to messages</Button>
 </main>
 
 <style>

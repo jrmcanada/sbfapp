@@ -40,7 +40,14 @@ deploy. Flag if you want auth built earlier instead.
    an admin uploads a plain-text file (one event per line) and the app
    renders it as a real monthly calendar grid.
 3. **Messages** — quick access to play messages from sbf.church/messages.
-   Pulled/linked from the site, not stored or re-hosted by the app.
+   Revised 2026-09-23: unlike Calendar, this site data is good — each
+   message row has structured `data-date`/`data-title`/`data-speaker`/
+   `data-tags` attributes and a direct MP3 URL. The app fetches and parses
+   the live page **client-side** (sbf.church's Cloudflare bot management
+   reliably blocks server-side/automated fetches — see Decisions — but
+   explicitly allows cross-origin browser reads) and plays messages via the
+   browser's native `<audio>` element pointed straight at sbf.church's own
+   MP3 URLs — no re-hosting, no iframe.
 4. **Notification sign-up** — a member can opt in/out of notifications
    independently of having an account. Delivery mechanism (push, email,
    in-app) is undecided — see Open questions.
@@ -112,6 +119,23 @@ Notes against the database-design rules in `CLAUDE.md`:
   via the server-only service-role client, so no anon/client role ever gets
   insert access. Real admin gating (who may reach the upload route at all)
   lands with Phase 5 auth.
+- 2026-09-23: Messages are scraped from sbf.church/messages' structured
+  `data-*` row attributes, not stored in the app's DB and not
+  admin-curated — unlike Calendar, the site's own data is good enough to
+  pull live on every request. Accepted risk: this is fragile to sbf.church
+  changing its message-list template (unlike Calendar, there's no admin
+  fallback if it breaks — a redesign there means a code fix here).
+- 2026-09-23: **The fetch runs client-side, not server-side.** Confirmed
+  (repeatedly, not once) that sbf.church's Cloudflare bot management blocks
+  Node's `fetch()` and even a genuine headless-browser request, regardless
+  of a matching browser User-Agent — this is TLS/network-fingerprint-level
+  detection, not a header check, so it would have blocked the feature in
+  production (Netlify's servers are Node too), not just locally. sbf.church
+  sends `Access-Control-Allow-Origin: *`, explicitly permitting
+  cross-origin browser reads, so `/messages` fetches from the visitor's own
+  browser instead — verified working end-to-end against the live site.
+  Keep this in mind for any future feature that wants to pull from
+  sbf.church: default to client-side, don't assume server-side will work.
 
 ## Open questions (resolve before the relevant feature's spec.md)
 
@@ -121,9 +145,6 @@ Notes against the database-design rules in `CLAUDE.md`:
   (`notifications` alone isn't enough for push or an inbox) and the build
   order (web push adds real setup cost). Needs a decision before feature 5
   is spec'd.
-- **Messages integration mechanism** — iframe embed, server-side fetch, or
-  plain link-out to sbf.church/messages. Check feasibility (framing,
-  Cloudflare) same as Phases 1–2 did, before Phase 3 is spec'd.
 - **Auth timing** — see the open question under Users & roles above.
 
 ## Build order (phases)
