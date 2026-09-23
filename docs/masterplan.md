@@ -48,11 +48,12 @@ deploy. Flag if you want auth built earlier instead.
    explicitly allows cross-origin browser reads) and plays messages via the
    browser's native `<audio>` element pointed straight at sbf.church's own
    MP3 URLs — no re-hosting, no iframe.
-4. **Notification sign-up** — a member can opt in/out of notifications
-   independently of having an account. Delivery mechanism (push, email,
-   in-app) is undecided — see Open questions.
+4. **Notification sign-up** — a member opts in via the browser's native
+   Push API (web push), independently of having an account. Decided
+   2026-09-24 — see Decisions. On iOS this only works from a Home Screen
+   PWA, not a regular Safari tab; onboarding needs to explain that.
 5. **Admin: notifications** — an admin writes a notification and pushes it
-   to opted-in members.
+   to every subscribed device.
 6. **Accounts & approval gate** — sign-up, pending state, admin
    approve/reject, login-required access.
 
@@ -63,8 +64,7 @@ per-feature when each `spec.md` is written, not assumed here. Feature 2
 
 ## Data model (draft)
 
-Features 2, 4–6 need app-owned data. Modeled minimally; extend when the
-notification delivery mechanism (below) is decided.
+Features 2, 4–6 need app-owned data.
 
 ```
 events
@@ -82,9 +82,16 @@ profiles                              -- one row per auth.users row (Supabase Au
   display_name      text not null
   status            text not null check (status in ('pending','approved','rejected')) default 'pending'
   role              text not null check (role in ('member','admin')) default 'member'
-  notify_opt_in     boolean not null default false
   approved_by       uuid references profiles(id) on delete restrict   -- nullable; which admin approved/rejected
   approved_at       timestamptz
+  created_at        timestamptz not null default now()
+
+push_subscriptions                    -- one row per subscribed browser/device
+  id                uuid PK default gen_random_uuid()
+  profile_id        uuid not null references profiles(id) on delete cascade
+  endpoint          text not null unique      -- the push service URL for this device
+  p256dh            text not null             -- subscription public key
+  auth              text not null             -- subscription auth secret
   created_at        timestamptz not null default now()
 
 notifications
@@ -101,11 +108,15 @@ Notes against the database-design rules in `CLAUDE.md`:
 - `profiles` splits from `auth.users` because Supabase owns and manages
   `auth.users` directly — this is the standard, justified exception to
   "one-to-one usually means one table."
-- `notify_opt_in` is a single fact about a member, so it's a column on
-  `profiles`, not a separate table — no repeating group here yet.
-- Per-user delivery/read tracking (did member X receive/see notification Y)
-  is deliberately **not** modeled yet — it depends entirely on the delivery
-  mechanism below, and adding it now would be guessing at a shape.
+- `push_subscriptions` is a real one-to-many relationship (a member can
+  subscribe from several devices/browsers) — a repeating group, so it's its
+  own table with a FK to `profiles`, not columns bolted onto `profiles`.
+  Opt-in/out is the presence or absence of a row, not a separate boolean —
+  storing both would risk the two facts drifting apart.
+- Per-notification delivery/read tracking (did device X receive/see
+  notification Y) is deliberately **not** modeled yet — pushing is
+  fire-and-forget to every current subscription for now; add tracking
+  later if there's a proven need, not speculatively.
 - `events` has no `created_by` yet since no admin/profile concept exists
   until Phase 4 — see Decisions below on how the upload route is gated
   until then.
@@ -136,15 +147,20 @@ Notes against the database-design rules in `CLAUDE.md`:
   browser instead — verified working end-to-end against the live site.
   Keep this in mind for any future feature that wants to pull from
   sbf.church: default to client-side, don't assume server-side will work.
+- 2026-09-24: **Notification delivery is web push**, confirmed free (the
+  Web Push standard needs no paid service — VAPID keys are self-generated,
+  and browser push services are provided free by Google/Mozilla/Apple as
+  part of the standard). Real caveat, not a cost one: iOS Safari only
+  supports push for a site added to the Home Screen as a PWA — a regular
+  Safari tab can't subscribe at all. This means Phase 4/5 needs a PWA
+  manifest + service worker (not just the notification data model), and
+  onboarding must explain the "Add to Home Screen" step to iPhone users or
+  they'll silently never receive notifications. Delivery is fire-and-forget
+  to every current `push_subscriptions` row — no per-notification tracking
+  (see Data model notes).
 
 ## Open questions (resolve before the relevant feature's spec.md)
 
-- **Notification delivery mechanism** — web push (needs a PWA service
-  worker + per-device subscription storage), email (simplest with
-  Supabase), or in-app inbox only. This changes the data model
-  (`notifications` alone isn't enough for push or an inbox) and the build
-  order (web push adds real setup cost). Needs a decision before feature 5
-  is spec'd.
 - **Auth timing** — see the open question under Users & roles above.
 
 ## Build order (phases)
@@ -159,11 +175,13 @@ Notes against the database-design rules in `CLAUDE.md`:
    Decisions), monthly calendar grid view.
 4. **Phase 3 — Messages.** Quick-access playback pulling from
    sbf.church/messages.
-5. **Phase 4 — Accounts & notifications data model.** `profiles` and
-   `notifications` tables, RLS policies, sign-up flow, admin
-   approve/reject UI, notify opt-in toggle. Notification _delivery_ is
-   scoped separately once the mechanism is decided (may split into its own
-   phase).
+5. **Phase 4 — Accounts & notifications.** `profiles`, `push_subscriptions`,
+   and `notifications` tables + RLS; sign-up flow; admin approve/reject UI;
+   PWA manifest + service worker; the push opt-in flow (including the iOS
+   "Add to Home Screen" explainer); admin compose-and-push UI. One phase,
+   not split — the data model and delivery mechanism are both already
+   decided, so there's no reason to build the tables now and the sending
+   logic later.
 6. **Phase 5 — Auth gate.** Wire up Supabase Google OAuth, gate all routes
    server-side behind an approved account, rely on RLS for data access —
    per `CLAUDE.md`'s deferred-auth rule, this lands last, right before
