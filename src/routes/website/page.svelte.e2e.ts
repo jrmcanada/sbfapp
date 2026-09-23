@@ -1,4 +1,28 @@
 import { expect, test } from '@playwright/test';
+import { deleteTestUser, ensureTestUser, signInAsTestUser } from '../supabaseTestHelper';
+
+// Every route now requires an approved account (Phase 4a) — sign in as a
+// real approved test user first. See supabaseTestHelper.ts.
+
+let testUserId: string;
+const testEmail = `e2e-website-${Date.now()}@example.com`;
+
+test.beforeAll(async () => {
+	testUserId = await ensureTestUser({
+		email: testEmail,
+		password: 'TestPassword123!',
+		status: 'approved',
+		role: 'member'
+	});
+});
+
+test.afterAll(async () => {
+	await deleteTestUser(testUserId);
+});
+
+test.beforeEach(async ({ context, baseURL }) => {
+	await signInAsTestUser(context, baseURL!, testEmail, 'TestPassword123!');
+});
 
 test('home links to the website view', async ({ page }) => {
 	await page.goto('/');

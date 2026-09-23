@@ -1,8 +1,7 @@
-import { supabase } from '$lib/supabase/client';
 import { parseMonthParam } from '$lib/calendar';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 	const { year, month } = parseMonthParam(url.searchParams.get('month'));
 
 	const { data, error } = await supabase

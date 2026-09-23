@@ -187,7 +187,7 @@ Notes against the database-design rules in `CLAUDE.md`:
    real signups can't exist without it (the `profiles` FK to `auth.users`
    requires a real Supabase Auth user, and testing approve/reject
    meaningfully needs the gate to actually matter).
-5. **Phase 5 — Deploy.** Netlify adapter, env vars, first deploy — only
+6. **Phase 5 — Deploy.** Netlify adapter, env vars, first deploy — only
    once every phase above is done, per `CLAUDE.md`.
 
 Each phase becomes one or more `spec.md` files as it's picked up; this plan

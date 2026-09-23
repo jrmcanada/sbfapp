@@ -1,10 +1,34 @@
 import { expect, test } from '@playwright/test';
+import { deleteTestUser, ensureTestUser, signInAsTestUser } from '../supabaseTestHelper';
 
 // Fetched client-side (see +page.ts for why), so unlike /calendar and
 // /admin/events, page.route() genuinely intercepts this — it's a real
 // browser-made request. Mocked rather than hitting the live site: content
 // there changes over time, and sbf.church's own Cloudflare bot management
 // is inconsistent against automated tools (including Playwright itself).
+//
+// Every route now requires an approved account (Phase 4a) — sign in as a
+// real approved test user first. See supabaseTestHelper.ts.
+
+let testUserId: string;
+const testEmail = `e2e-messages-${Date.now()}@example.com`;
+
+test.beforeAll(async () => {
+	testUserId = await ensureTestUser({
+		email: testEmail,
+		password: 'TestPassword123!',
+		status: 'approved',
+		role: 'member'
+	});
+});
+
+test.afterAll(async () => {
+	await deleteTestUser(testUserId);
+});
+
+test.beforeEach(async ({ context, baseURL }) => {
+	await signInAsTestUser(context, baseURL!, testEmail, 'TestPassword123!');
+});
 
 function row(n: number): string {
 	return `

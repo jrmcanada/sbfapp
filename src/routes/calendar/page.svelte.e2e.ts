@@ -1,13 +1,23 @@
 import { expect, test } from '@playwright/test';
-import { deleteTestEvents, insertTestEvents } from '../supabaseTestHelper';
+import {
+	deleteTestEvents,
+	deleteTestUser,
+	ensureTestUser,
+	insertTestEvents,
+	signInAsTestUser
+} from '../supabaseTestHelper';
 
 // /calendar reads via a server-side load function, which page.route() can't
 // intercept (browser-only). These tests seed real rows with unique,
 // run-specific titles and delete them afterward — see supabaseTestHelper.ts.
+// Every route now requires an approved account (Phase 4a), so each test
+// signs in as a real approved test user first — see signInAsTestUser.
 
 const multiDayTitle = `E2E Youth Conference ${Date.now()}`;
 const singleDayTitle = `E2E Christmas Service ${Date.now()}`;
 let seededIds: string[] = [];
+let testUserId: string;
+const testEmail = `e2e-calendar-${Date.now()}@example.com`;
 
 test.beforeAll(async () => {
 	seededIds = await insertTestEvents([
@@ -19,10 +29,21 @@ test.beforeAll(async () => {
 			end_date: '2026-09-15'
 		}
 	]);
+	testUserId = await ensureTestUser({
+		email: testEmail,
+		password: 'TestPassword123!',
+		status: 'approved',
+		role: 'member'
+	});
 });
 
 test.afterAll(async () => {
 	await deleteTestEvents(seededIds);
+	await deleteTestUser(testUserId);
+});
+
+test.beforeEach(async ({ context, baseURL }) => {
+	await signInAsTestUser(context, baseURL!, testEmail, 'TestPassword123!');
 });
 
 test('home links to the calendar', async ({ page }) => {
