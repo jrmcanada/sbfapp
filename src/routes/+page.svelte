@@ -1,2 +1,26 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script lang="ts">
+	import { resolve } from '$app/paths';
+	import { Button } from '$lib/components/ui/button';
+</script>
+
+<svelte:head><title>SBF</title></svelte:head>
+
+<main class="home">
+	<h1>Sudbury Bible Fellowship</h1>
+	<Button href={resolve('/website')}>View the website</Button>
+</main>
+
+<style>
+	.home {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+		padding: 2rem 1rem;
+	}
+
+	h1 {
+		font-size: 1.5rem;
+		font-weight: 600;
+	}
+</style>
