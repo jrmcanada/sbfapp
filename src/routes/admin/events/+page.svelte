@@ -15,6 +15,8 @@
 	<header class="toolbar">
 		<Button href={resolve('/')} variant="ghost">Home</Button>
 		<Button href={resolve('/calendar')} variant="ghost">View calendar</Button>
+		<Button href={resolve('/admin/accounts')} variant="ghost">Accounts</Button>
+		<Button href={resolve('/admin/notifications')} variant="ghost">Notifications</Button>
 	</header>
 
 	<h1>Upload events</h1>

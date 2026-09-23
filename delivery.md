@@ -2,20 +2,20 @@
 
 ## Current
 
-- **Feature:** Phase 4a — Accounts & Auth Gate (`docs/specs/04a-accounts-auth/spec.md`)
-- **Branch:** `feat/accounts-auth`
-- **Status:** built and verified (check, lint, 41 unit tests, 28 e2e tests
-  all pass; visually confirmed signed-in session bar + `/admin/accounts`).
-  Not yet merged to `master`. **Real Google sign-in is still unverified**
-  — the human's OAuth provider setup was in progress during build; e2e
-  coverage uses real Supabase sessions via password-auth test users
-  (Google can't be automated), so the actual "Sign in with Google" button
-  needs a manual check once OAuth is configured.
-- **Next action:** human finishes Google OAuth setup (Google Cloud client
-  + Supabase provider config) and manually verifies real sign-in; human
-  runs the first-admin bootstrap SQL (given at build time) to promote
-  themselves; then merge `feat/accounts-auth` to `master`; then Phase 4b
-  (push notifications).
+- **Feature:** Phase 4b — Push Notifications (`docs/specs/04b-push-notifications/spec.md`)
+- **Branch:** `feat/push-notifications`
+- **Status:** built and verified (check, lint, 55 unit tests, 36 e2e tests
+  all pass; database confirmed clean after every run). **Real end-to-end
+  push delivery is still unverified** — automated Chrome (even a real
+  persistent profile) can't complete an actual subscription
+  ("push service not available," a known automation limitation, not an
+  app bug); this needs a human clicking "Enable notifications" in their
+  own real browser, same category as Phase 4a's Google sign-in. Did catch
+  and fix a real bug this way already (see Decisions) before hitting that
+  wall.
+- **Next action:** human manually verifies real subscribe + a real sent
+  notification arrives, then merge `feat/push-notifications` to `master`.
+  Every masterplan phase is then done except Deploy.
 
 ## Done
 
@@ -36,9 +36,34 @@
   `feat/messages`, verified (check, lint, 30 unit + 15 e2e tests, visual
   check against the live site) and merged to `master` (fast-forward).
   Commit `d96cdff`.
+- **Phase 4a — Accounts & Auth Gate** (2026-09-24). Real Google sign-in,
+  admin approval, login-required gate on every route. Built on
+  `feat/accounts-auth`, verified (check, lint, 41 unit + 28 e2e tests) and
+  the human confirmed real Google sign-in + first-admin bootstrap worked
+  before merge to `master` (fast-forward). Commit `3ac3f8c`.
 
 ## Decisions
 
+- 2026-09-24: **Push notifications built (`push_subscriptions` +
+  `notifications` tables, `web-push` + self-generated VAPID keys, service
+  worker, PWA manifest, `/admin/notifications`).** App icon reuses SBF's
+  own building favicon (their brand purple, already this app's primary
+  color) rather than a new asset. `notifications` has zero RLS
+  policies — default-deny, so even an admin's own session can't touch it;
+  `/admin/notifications` uses the secret-key client throughout, same
+  pattern as Calendar's upload route.
+- 2026-09-24: Caught a real race condition via manual testing that the
+  e2e suite structurally couldn't catch (it deliberately doesn't drive the
+  real `PushManager` — see spec's Testing approach): `subscribeToPush()`
+  called `pushManager.subscribe()` right after `serviceWorker.register()`
+  resolved, which is before the worker is actually active. Fixed by
+  awaiting `navigator.serviceWorker.ready` first.
+- 2026-09-24: Test cleanup gap found and fixed: `notifications.created_by`
+  is `ON DELETE RESTRICT` (intentional audit trail), so a test admin that
+  sent a notification couldn't be deleted without deleting the
+  notification first. One e2e run left an orphaned test admin + a real
+  notification row in the live project until caught and cleaned up by
+  hand; `deleteNotificationsByCreator` fixes it going forward.
 - 2026-09-24: **Phases 4 and 5 merged** — accounts, notifications, and the
   login-required auth gate built together, not deferred. Forced by a hard
   dependency: `profiles.id` has a FK to `auth.users`, so real signups

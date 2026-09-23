@@ -131,12 +131,24 @@ export async function ensureTestUser({
 }
 
 export async function deleteTestUser(id: string): Promise<void> {
-	// Cascades to the profiles row (ON DELETE CASCADE).
+	// Cascades to the profiles row (ON DELETE CASCADE). Does NOT cascade to
+	// notifications.created_by, which is ON DELETE RESTRICT on purpose (an
+	// audit trail of who sent what) — a test admin that sent a notification
+	// must have it deleted first via deleteNotificationsByCreator, or this
+	// throws.
 	const res = await fetch(`${url}/auth/v1/admin/users/${id}`, {
 		method: 'DELETE',
 		headers: headers()
 	});
 	if (!res.ok) throw new Error(`test user cleanup failed: ${res.status} ${await res.text()}`);
+}
+
+export async function deleteNotificationsByCreator(profileId: string): Promise<void> {
+	const res = await fetch(`${url}/rest/v1/notifications?created_by=eq.${profileId}`, {
+		method: 'DELETE',
+		headers: headers()
+	});
+	if (!res.ok) throw new Error(`notification cleanup failed: ${res.status} ${await res.text()}`);
 }
 
 /**

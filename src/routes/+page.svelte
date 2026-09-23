@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
+	import NotificationControl from '$lib/components/NotificationControl.svelte';
 </script>
 
 <svelte:head><title>SBF</title></svelte:head>
@@ -10,6 +11,7 @@
 	<Button href={resolve('/website')}>View the website</Button>
 	<Button href={resolve('/calendar')}>View the calendar</Button>
 	<Button href={resolve('/messages')}>Listen to messages</Button>
+	<NotificationControl />
 </main>
 
 <style>

@@ -15,6 +15,8 @@
 <div class="accounts-page">
 	<header class="toolbar">
 		<Button href={resolve('/')} variant="ghost">Home</Button>
+		<Button href={resolve('/admin/events')} variant="ghost">Events</Button>
+		<Button href={resolve('/admin/notifications')} variant="ghost">Notifications</Button>
 	</header>
 
 	<h1>Accounts</h1>
