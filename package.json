@@ -17,6 +17,7 @@
 		"test:unit": "vitest"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.117.0",
 		"clsx": "^2.1.1",
 		"tailwind-merge": "^3.7.0"
 	},

@@ -33,8 +33,12 @@ deploy. Flag if you want auth built earlier instead.
 1. **Website view** — view sbf.church inside the app (likely an embedded
    view/link-out; exact mechanism is a `spec.md` decision, not a masterplan
    one).
-2. **Calendar** — monthly view of church events, pulled/linked from
-   sbf.church rather than re-entered in the app. No app-owned event data.
+2. **Calendar** — monthly grid view of church events. Revised 2026-09-23:
+   sbf.church has no real calendar to pull from (just a flat "Upcoming
+   Events" list with free-text dates, e.g. "November 8 - 10 • 2024" — not
+   machine-parseable, and no feed/API exists). Events are app-owned instead:
+   an admin uploads a plain-text file (one event per line) and the app
+   renders it as a real monthly calendar grid.
 3. **Messages** — quick access to play messages from sbf.church/messages.
    Pulled/linked from the site, not stored or re-hosted by the app.
 4. **Notification sign-up** — a member can opt in/out of notifications
@@ -45,16 +49,27 @@ deploy. Flag if you want auth built earlier instead.
 6. **Accounts & approval gate** — sign-up, pending state, admin
    approve/reject, login-required access.
 
-Because features 1–3 pull from the live SBF website rather than storing
-data in the app, they likely don't need their own database tables — that's
-confirmed per-feature when each `spec.md` is written, not assumed here.
+Features 1 and 3 pull from the live SBF website rather than storing data in
+the app, so they likely don't need their own database tables — confirmed
+per-feature when each `spec.md` is written, not assumed here. Feature 2
+(Calendar) is the exception: its data is app-owned (see Data model below).
 
 ## Data model (draft)
 
-Only features 4–6 clearly need app-owned data right now. Modeled minimally;
-extend when the notification delivery mechanism (below) is decided.
+Features 2, 4–6 need app-owned data. Modeled minimally; extend when the
+notification delivery mechanism (below) is decided.
 
 ```
+events
+  id                uuid PK default gen_random_uuid()
+  title             text not null
+  description       text                                              -- nullable; optional
+  start_date        date not null
+  end_date          date not null check (end_date >= start_date)      -- single-day events: end_date = start_date
+  created_at        timestamptz not null default now()
+  -- created_by intentionally omitted: no admin/profile row exists to
+  -- reference until Phase 4. Add via migration once profiles exists.
+
 profiles                              -- one row per auth.users row (Supabase Auth owns auth.users)
   id                uuid PK, references auth.users(id) on delete cascade
   display_name      text not null
@@ -84,6 +99,19 @@ Notes against the database-design rules in `CLAUDE.md`:
 - Per-user delivery/read tracking (did member X receive/see notification Y)
   is deliberately **not** modeled yet — it depends entirely on the delivery
   mechanism below, and adding it now would be guessing at a shape.
+- `events` has no `created_by` yet since no admin/profile concept exists
+  until Phase 4 — see Decisions below on how the upload route is gated
+  until then.
+
+## Decisions
+
+- 2026-09-23: The Calendar's admin upload route ships **unauthenticated**
+  in Phase 2, consistent with `CLAUDE.md`'s default (build unauthenticated
+  locally until deploy readiness). The `events` table itself stays safe
+  regardless: RLS allows public `SELECT` only, and the upload route writes
+  via the server-only service-role client, so no anon/client role ever gets
+  insert access. Real admin gating (who may reach the upload route at all)
+  lands with Phase 5 auth.
 
 ## Open questions (resolve before the relevant feature's spec.md)
 
@@ -93,10 +121,9 @@ Notes against the database-design rules in `CLAUDE.md`:
   (`notifications` alone isn't enough for push or an inbox) and the build
   order (web push adds real setup cost). Needs a decision before feature 5
   is spec'd.
-- **Website/calendar/messages integration mechanism** — iframe embed,
-  server-side fetch, or plain link-out to sbf.church. Affects feasibility
-  (does the SBF site allow framing? is there a feed/API for the calendar?)
-  and should be checked per-feature.
+- **Messages integration mechanism** — iframe embed, server-side fetch, or
+  plain link-out to sbf.church/messages. Check feasibility (framing,
+  Cloudflare) same as Phases 1–2 did, before Phase 3 is spec'd.
 - **Auth timing** — see the open question under Users & roles above.
 
 ## Build order (phases)
@@ -106,7 +133,9 @@ Notes against the database-design rules in `CLAUDE.md`:
    Vitest/Playwright).
 2. **Phase 1 — Website view.** Simplest feature, no data model, good first
    spec to prove out the pipeline (spec-reviewer → build → review → verify).
-3. **Phase 2 — Calendar.** Monthly view pulling from sbf.church.
+3. **Phase 2 — Calendar.** `events` table + RLS (public read, server-only
+   write), admin text-file upload route (unauthenticated for now — see
+   Decisions), monthly calendar grid view.
 4. **Phase 3 — Messages.** Quick-access playback pulling from
    sbf.church/messages.
 5. **Phase 4 — Accounts & notifications data model.** `profiles` and
