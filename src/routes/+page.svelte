@@ -21,7 +21,7 @@
 		{#if data.signedIn}
 			<div class="session">
 				<span>{data.displayName}</span>
-				<form method="POST" action="/auth/signout">
+				<form class="signout" method="POST" action="/auth/signout">
 					<Button type="submit" variant="ghost" size="sm">Sign out</Button>
 				</form>
 			</div>
@@ -66,7 +66,8 @@
 		gap: 0.75rem;
 		background: var(--primary);
 		color: var(--primary-foreground);
-		padding: calc(1.1rem + env(safe-area-inset-top, 0px)) 1.1rem 1.3rem;
+		padding: 1.1rem 1.1rem 1.3rem;
+		margin-top: max(3.35rem, env(safe-area-inset-top, 0px));
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
@@ -97,6 +98,10 @@
 		align-items: center;
 		height: 1.75rem;
 		line-height: 1;
+	}
+
+	.signout :global(button) {
+		border-color: color-mix(in srgb, var(--primary-foreground) 35%, transparent);
 	}
 
 	.heading {
