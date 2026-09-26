@@ -48,7 +48,7 @@ test.beforeEach(async ({ context, baseURL }) => {
 
 test('home links to the calendar', async ({ page }) => {
 	await page.goto('/');
-	await page.getByRole('link', { name: 'View the calendar' }).click();
+	await page.getByRole('link', { name: 'Calendar' }).click();
 	await expect(page).toHaveURL(/\/calendar/);
 });
 

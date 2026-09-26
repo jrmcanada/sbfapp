@@ -49,6 +49,8 @@
  * ui-ux-designer should sign off before this ships.
  */
 :root {
+	--font-sans: 'Work Sans', system-ui, -apple-system, sans-serif;
+	--font-display: 'Fraunces', Georgia, serif;
 	--radius: 0.625rem;
 	--background: #f5f2eb;
 	--foreground: #21005c;
@@ -125,5 +127,11 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+		font-family: var(--font-sans);
+	}
+	h1,
+	h2 {
+		font-family: var(--font-display);
+		text-wrap: balance;
 	}
 }

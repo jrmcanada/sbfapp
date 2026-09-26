@@ -1,30 +1,85 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
+	import { Calendar, Globe, PlayCircle } from 'lucide-svelte';
+	import Logo from '$lib/components/Logo.svelte';
+	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationControl from '$lib/components/NotificationControl.svelte';
 </script>
 
 <svelte:head><title>SBF</title></svelte:head>
 
 <main class="home">
-	<h1>Sudbury Bible Fellowship</h1>
-	<Button href={resolve('/website')}>View the website</Button>
-	<Button href={resolve('/calendar')}>View the calendar</Button>
-	<Button href={resolve('/messages')}>Listen to messages</Button>
-	<NotificationControl />
+	<header class="band">
+		<Logo variant="light" size={24} />
+		<span class="word">SBF</span>
+	</header>
+
+	<div class="heading">
+		<h1>Welcome back</h1>
+		<p>Everything for Sudbury Bible Fellowship, in one place.</p>
+	</div>
+
+	<div class="cards">
+		<NavCard icon={Globe} label="Website" sub="Browse sbf.church" href={resolve('/website')} />
+		<NavCard
+			icon={Calendar}
+			label="Calendar"
+			sub="See what's coming up"
+			href={resolve('/calendar')}
+		/>
+		<NavCard
+			icon={PlayCircle}
+			label="Messages"
+			sub="Listen to recent messages"
+			href={resolve('/messages')}
+		/>
+		<NotificationControl />
+	</div>
 </main>
 
 <style>
 	.home {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 1rem;
-		padding: 2rem 1rem;
+		max-width: 32rem;
+		margin: 0 auto;
 	}
 
-	h1 {
-		font-size: 1.5rem;
+	.band {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		background: var(--primary);
+		padding: 1.1rem 1.1rem 1.3rem;
+	}
+
+	.word {
+		font-family: var(--font-display);
+		color: var(--primary-foreground);
 		font-weight: 600;
+		font-size: 1rem;
+		letter-spacing: 0.02em;
+	}
+
+	.heading {
+		padding: 1.1rem 1.1rem 0.2rem;
+	}
+
+	.heading h1 {
+		font-size: 1.3rem;
+		margin: 0 0 0.2rem;
+	}
+
+	.heading p {
+		margin: 0;
+		font-size: 0.85rem;
+		color: var(--muted-foreground);
+	}
+
+	.cards {
+		display: flex;
+		flex-direction: column;
+		gap: 0.7rem;
+		padding: 1rem 1.1rem 1.5rem;
 	}
 </style>

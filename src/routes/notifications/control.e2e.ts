@@ -32,7 +32,7 @@ test('an iPhone not on the Home Screen sees the install explainer, not a button'
 
 	await page.goto('/');
 	await expect(page.getByText('Add to Home Screen')).toBeVisible();
-	await expect(page.getByRole('button', { name: /notifications/i })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: /notifications/i })).toBeDisabled();
 
 	await context.close();
 });
@@ -49,7 +49,7 @@ test('an iPhone already on the Home Screen sees the button, not the explainer', 
 	});
 
 	await page.goto('/');
-	await expect(page.getByRole('button', { name: 'Enable notifications' })).toBeVisible();
+	await expect(page.getByRole('button', { name: /notifications/i })).toBeEnabled();
 	await expect(page.getByText('Add to Home Screen')).toHaveCount(0);
 
 	await context.close();
@@ -62,5 +62,5 @@ test('a desktop browser sees the button directly, no iOS explainer', async ({
 }) => {
 	await signInAsTestUser(context, baseURL!, testEmail, 'TestPassword123!');
 	await page.goto('/');
-	await expect(page.getByRole('button', { name: 'Enable notifications' })).toBeVisible();
+	await expect(page.getByRole('button', { name: /notifications/i })).toBeEnabled();
 });

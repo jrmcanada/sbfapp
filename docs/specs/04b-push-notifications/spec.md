@@ -166,7 +166,7 @@ runner's reach). Split accordingly:
 - **Real bug caught by manual testing, not the test suite**: `subscribeToPush()`
   originally called `pushManager.subscribe()` right after
   `serviceWorker.register()` resolved — but `register()` resolves once
-  installation *starts*, not once the worker is active, so subscribing
+  installation _starts_, not once the worker is active, so subscribing
   immediately after it intermittently failed with "no active Service
   Worker." Fixed by awaiting `navigator.serviceWorker.ready` first, which
   only resolves once a worker is actually active. The e2e suite couldn't
@@ -181,7 +181,7 @@ runner's reach). Split accordingly:
   an actual end-to-end subscribe needs a human clicking the button in
   their own real browser, same category as Phase 4a's Google sign-in.
 - **Test cleanup gap**: `notifications.created_by` is `ON DELETE
-  RESTRICT` (intentional — an audit trail), so a test admin that sent a
+RESTRICT` (intentional — an audit trail), so a test admin that sent a
   notification couldn't be deleted afterward without deleting the
   notification first. First e2e run left an orphaned test admin + a real
   "E2E Test Notification" row in the live project until this was caught

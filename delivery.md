@@ -2,22 +2,34 @@
 
 ## Current
 
-- **Feature:** Phase 4b — Push Notifications (`docs/specs/04b-push-notifications/spec.md`)
-- **Branch:** `feat/push-notifications`
-- **Status:** built and verified (check, lint, 55 unit tests, 36 e2e tests
-  all pass; database confirmed clean after every run). **Real end-to-end
-  push delivery is still unverified** — automated Chrome (even a real
-  persistent profile) can't complete an actual subscription
-  ("push service not available," a known automation limitation, not an
-  app bug); this needs a human clicking "Enable notifications" in their
-  own real browser, same category as Phase 4a's Google sign-in. Did catch
-  and fix a real bug this way already (see Decisions) before hitting that
-  wall.
-- **Next action:** human manually verifies real subscribe + a real sent
-  notification arrives, then merge `feat/push-notifications` to `master`.
-  Every masterplan phase is then done except Deploy.
+- **Feature:** Home page cosmetic refresh (no spec.md — a design-only
+  change, not a masterplan feature; approved via a mockup artifact with
+  3 options, human picked "Cards")
+- **Branch:** `feat/home-refresh`
+- **Status:** built and verified (check, lint, 55 unit tests, 35 e2e tests
+  all pass; visually confirmed against the real app, matches the approved
+  mockup). Not yet merged.
+- **Next action:** merge `feat/home-refresh` to `main` and redeploy (this
+  repo now has a GitHub remote — `git push` after merging, Netlify
+  auto-deploys on push to `main`).
 
 ## Done
+
+- **Phase 4b — Push Notifications** (2026-09-24). `push_subscriptions` +
+  `notifications` tables, web push (VAPID), service worker, PWA manifest,
+  `/admin/notifications`. Built on `feat/push-notifications`, verified
+  (check, lint, 55 unit + 36 e2e tests) and the human confirmed a real
+  subscribe + a real received notification before merge to `master`
+  (fast-forward). Commit `781c8b2`.
+- **Phase 5 — Deploy** (2026-09-26). Pushed to GitHub
+  (`github.com/jrmcanada/sbfapp`, branch renamed `master`→`main`),
+  deployed on Netlify (`sbfapp.netlify.app`) with all 5 env vars (the two
+  secret keys flagged "Contains secret values"). Google OAuth + Supabase
+  redirect config updated for the production URL. Real Google sign-in,
+  the auth gate, and PWA assets all confirmed working in production. Two
+  real church members have since signed up and been approved
+  (Nathanael Martin, Silvanus Santhosh) — **the app is in real use now**,
+  not just test data.
 
 - **Phase 0 — Scaffold** (2026-09-22). SvelteKit + Svelte 5, strict TS, Tailwind v4,
   shadcn-svelte (hand-authored `components.json`; CLI requires an interactive
@@ -44,6 +56,36 @@
 
 ## Decisions
 
+- 2026-09-26: **The app is in real use — testing conventions need to
+  account for that from now on, not just "shared DB, seed/cleanup."** A
+  routine e2e run of the `/admin/notifications` compose-form test sent a
+  real "E2E Test Notification" push to the human's own real subscribed
+  devices, because real `push_subscriptions` now exist (from real use)
+  and the test actually submitted the form — no mock exists or can exist
+  for the real send path (same server-side-only limitation as other
+  Supabase calls). The DB row got cleaned up automatically by the test's
+  own teardown, but the push itself already fired and can't be recalled.
+  Fixed by removing the real-submit assertion from e2e entirely (see
+  `admin/notifications/page.svelte.e2e.ts`) — that route's send/cleanup
+  logic is unit-tested with a mocked sender (`pushSend.spec.ts`) and
+  that's now the only coverage of the actual sending behavior. Lesson for
+  future work: before writing an e2e test that performs a real
+  side-effecting action (not just a DB write), check whether real users
+  could be affected by it now that the app has real users, not just
+  whether cleanup is possible.
+- 2026-09-26: **Home page redesign** ("Cards" concept, approved from 3
+  mockup options via an Artifact). Adds SBF's own logo (their building
+  mark + "SBF" wordmark, pulled from sbf.church's own header) via a new
+  `Logo` component; Fraunces (headings) + Work Sans (body, matches
+  sbf.church's own CSS class name) from Google Fonts; a purple header
+  band; the three nav links plus notifications become `NavCard`s (icon +
+  label + description) using `lucide-svelte` — installed now for the
+  first time, though declared as this project's icon library since
+  Phase 0's `components.json`. Scoped to the home page only, not the
+  other pages' toolbars — the mockup only covered the home screen.
+  Changing NavCard's accessible link/button text broke several Phases
+  1–4a e2e tests that matched old label text ("View the calendar",
+  "Enable notifications", etc.) — updated to match the new labels.
 - 2026-09-24: **Push notifications built (`push_subscriptions` +
   `notifications` tables, `web-push` + self-generated VAPID keys, service
   worker, PWA manifest, `/admin/notifications`).** App icon reuses SBF's

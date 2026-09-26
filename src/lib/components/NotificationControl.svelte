@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { Button } from '$lib/components/ui/button';
+	import { Bell, BellOff, BellRing } from 'lucide-svelte';
+	import NavCard from '$lib/components/NavCard.svelte';
 	import { isIOS, isStandalone } from '$lib/platform';
 	import {
 		getCurrentSubscription,
@@ -56,40 +57,40 @@
 			busy = false;
 		}
 	}
+
+	const sub = $derived(
+		busy
+			? 'Working…'
+			: status === 'ios-not-installed'
+				? 'Add to Home Screen first'
+				: status === 'unsupported'
+					? 'Not supported on this browser'
+					: status === 'subscribed'
+						? 'On for this device'
+						: status === 'checking'
+							? 'Checking…'
+							: 'Tap to enable'
+	);
+
+	const icon = $derived(
+		status === 'subscribed' ? BellRing : status === 'unsupported' ? BellOff : Bell
+	);
+	const canToggle = $derived(status === 'subscribed' || status === 'not-subscribed');
 </script>
 
-{#if status === 'ios-not-installed'}
-	<p class="hint">
-		To get notifications on iPhone, first add this to your Home Screen: tap <strong>Share</strong>,
-		then
-		<strong>Add to Home Screen</strong>.
-	</p>
-{:else if status === 'subscribed' || status === 'not-subscribed'}
-	<Button
-		onclick={toggle}
-		disabled={busy}
-		variant={status === 'subscribed' ? 'outline' : 'default'}
-	>
-		{#if busy}
-			Working…
-		{:else if status === 'subscribed'}
-			Disable notifications
-		{:else}
-			Enable notifications
-		{/if}
-	</Button>
-	{#if error}
-		<p class="error" role="alert">{error}</p>
-	{/if}
+<NavCard
+	{icon}
+	label="Notifications"
+	{sub}
+	active={status === 'subscribed'}
+	disabled={!canToggle || busy}
+	onclick={canToggle ? toggle : undefined}
+/>
+{#if error}
+	<p class="error" role="alert">{error}</p>
 {/if}
 
 <style>
-	.hint {
-		color: var(--muted-foreground);
-		font-size: 0.9rem;
-		max-width: 24rem;
-	}
-
 	.error {
 		color: var(--destructive);
 		font-size: 0.85rem;

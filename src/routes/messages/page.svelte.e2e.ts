@@ -47,7 +47,7 @@ test('home links to messages', async ({ page }) => {
 		})
 	);
 	await page.goto('/');
-	await page.getByRole('link', { name: 'Listen to messages' }).click();
+	await page.getByRole('link', { name: 'Messages' }).click();
 	await expect(page).toHaveURL(/\/messages/);
 });
 
