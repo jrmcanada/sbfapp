@@ -4,14 +4,28 @@
 	import Logo from '$lib/components/Logo.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationControl from '$lib/components/NotificationControl.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head><title>SBF</title></svelte:head>
 
 <main class="home">
 	<header class="band">
-		<Logo variant="light" size={32} />
-		<span class="word">SBF</span>
+		<div class="brand">
+			<Logo variant="light" size={32} />
+			<span class="word">SBF</span>
+		</div>
+		{#if data.signedIn}
+			<div class="session">
+				<span>{data.displayName}</span>
+				<form method="POST" action="/auth/signout">
+					<Button type="submit" variant="ghost" size="sm">Sign out</Button>
+				</form>
+			</div>
+		{/if}
 	</header>
 
 	<div class="heading">
@@ -48,18 +62,41 @@
 	.band {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
+		justify-content: space-between;
+		gap: 0.75rem;
 		background: var(--primary);
-		padding: 1.1rem 1.1rem 1.3rem;
+		color: var(--primary-foreground);
+		padding: calc(1.1rem + env(safe-area-inset-top, 0px)) 1.1rem 1.3rem;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
 	}
 
 	.word {
 		font-family: var(--font-display);
-		color: var(--primary-foreground);
 		font-weight: 600;
 		font-size: 1.33rem;
 		line-height: 1;
 		letter-spacing: 0.02em;
+	}
+
+	.session {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 0.85rem;
+	}
+
+	.session span {
+		display: inline-flex;
+		align-items: center;
+		height: 1.75rem;
+		line-height: 1;
 	}
 
 	.heading {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
 	import { Button } from '$lib/components/ui/button';
 	import type { LayoutProps } from './$types';
@@ -9,7 +10,7 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-{#if data.signedIn}
+{#if data.signedIn && page.url.pathname !== '/'}
 	<div class="session-bar">
 		<span>{data.displayName}</span>
 		<form method="POST" action="/auth/signout">
@@ -26,7 +27,7 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: 0.75rem;
-		padding: 0.5rem 1rem;
+		padding: calc(0.5rem + env(safe-area-inset-top, 0px)) 1rem 0.5rem;
 		font-size: 0.85rem;
 		color: var(--muted-foreground);
 		border-bottom: 1px solid var(--border);
