@@ -63,8 +63,10 @@ test('an approved non-admin is redirected away from /admin/*', async ({
 	});
 	try {
 		await signInAsTestUser(context, baseURL!, email, 'TestPassword123!');
-		await page.goto('/admin/accounts');
-		await expect(page).toHaveURL(/\/$/);
+		for (const route of ['/admin', '/admin/accounts', '/admin/events', '/admin/notifications']) {
+			await page.goto(route);
+			await expect(page).toHaveURL(/\/$/);
+		}
 	} finally {
 		await deleteTestUser(id);
 	}

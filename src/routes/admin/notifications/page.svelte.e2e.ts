@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { deleteTestUser, ensureTestUser, signInAsTestUser } from '../../supabaseTestHelper';
+import {
+	deleteNotificationsByCreator,
+	deleteTestUser,
+	ensureTestUser,
+	insertTestNotification,
+	signInAsTestUser
+} from '../../supabaseTestHelper';
 
 // No test here actually submits the compose form. It used to (asserting
 // "Sent to 0 devices"), on the assumption that the shared project would
@@ -26,6 +32,8 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
+	// notifications.created_by is ON DELETE RESTRICT, so history rows go first.
+	await deleteNotificationsByCreator(adminId);
 	await deleteTestUser(adminId);
 });
 
@@ -39,4 +47,21 @@ test('the compose form renders with both fields required', async ({ page }) => {
 	await expect(page.getByLabel('Title')).toHaveAttribute('required', '');
 	await expect(page.getByLabel('Message')).toHaveAttribute('required', '');
 	await expect(page.getByRole('button', { name: 'Send' })).toBeEnabled();
+});
+
+test('history lists what has been sent, newest first, with who sent it', async ({ page }) => {
+	// Rows are inserted directly — history is a read, so nothing is pushed.
+	const stamp = Date.now();
+	await insertTestNotification(adminId, `E2E first ${stamp}`, 'older message');
+	await insertTestNotification(adminId, `E2E second ${stamp}`, 'newer message');
+
+	await page.goto('/admin/notifications');
+	await page.getByText(/^History/).click();
+
+	const items = page.locator('.history-item').filter({ hasText: `${stamp}` });
+	await expect(items).toHaveCount(2);
+	await expect(items.nth(0)).toContainText(`E2E second ${stamp}`);
+	await expect(items.nth(0)).toContainText('newer message');
+	await expect(items.nth(0)).toContainText(adminEmail);
+	await expect(items.nth(1)).toContainText(`E2E first ${stamp}`);
 });

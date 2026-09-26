@@ -1,71 +1,46 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
+	import AccountRow from '$lib/components/AccountRow.svelte';
+	import AdminNav from '$lib/components/AdminNav.svelte';
 	import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
-	const pending = $derived(data.profiles.filter((p) => p.status === 'pending'));
-	const decided = $derived(data.profiles.filter((p) => p.status !== 'pending'));
+	const sections = $derived([
+		{ title: 'Pending', empty: 'No accounts waiting for approval.', accounts: data.groups.pending },
+		{ title: 'Admins', empty: 'No admins.', accounts: data.groups.admins },
+		{ title: 'Regular', empty: 'No regular accounts yet.', accounts: data.groups.regular },
+		{ title: 'Rejected', empty: 'No rejected accounts.', accounts: data.groups.rejected }
+	]);
 </script>
 
 <svelte:head><title>Accounts · SBF</title></svelte:head>
 
 <div class="accounts-page">
-	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
-		<Button href={resolve('/admin/events')} variant="ghost">Events</Button>
-		<Button href={resolve('/admin/notifications')} variant="ghost">Notifications</Button>
-	</header>
+	<AdminNav current="accounts" />
 
 	<h1>Accounts</h1>
 
 	{#if data.loadError}
 		<p class="error" role="alert">Couldn't load accounts: {data.loadError}</p>
 	{:else}
-		<section>
-			<h2>Pending ({pending.length})</h2>
-			{#if pending.length === 0}
-				<p class="empty">No accounts waiting for approval.</p>
-			{:else}
-				<ul class="list">
-					{#each pending as profile (profile.id)}
-						<li class="account">
-							<span>{profile.display_name}</span>
-							<div class="actions">
-								<form method="POST" action="?/approve" use:enhance>
-									<input type="hidden" name="id" value={profile.id} />
-									<Button type="submit" size="sm">Approve</Button>
-								</form>
-								<form method="POST" action="?/reject" use:enhance>
-									<input type="hidden" name="id" value={profile.id} />
-									<Button type="submit" size="sm" variant="destructive">Reject</Button>
-								</form>
-							</div>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
+		{#if form?.error}
+			<p class="error" role="alert">{form.error}</p>
+		{/if}
 
-		<section>
-			<h2>Everyone else</h2>
-			{#if decided.length === 0}
-				<p class="empty">No other accounts yet.</p>
-			{:else}
-				<ul class="list">
-					{#each decided as profile (profile.id)}
-						<li class="account">
-							<span>{profile.display_name}</span>
-							<span class="status"
-								>{profile.status}{profile.role === 'admin' ? ' · admin' : ''}</span
-							>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
+		{#each sections as section (section.title)}
+			<section>
+				<h2>{section.title} ({section.accounts.length})</h2>
+				{#if section.accounts.length === 0}
+					<p class="empty">{section.empty}</p>
+				{:else}
+					<ul class="list">
+						{#each section.accounts as account (account.id)}
+							<AccountRow {account} isSelf={account.id === data.currentUserId} />
+						{/each}
+					</ul>
+				{/if}
+			</section>
+		{/each}
 	{/if}
 </div>
 
@@ -94,28 +69,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-	}
-
-	.account {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		padding: 0.5rem 0.75rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		background: var(--card);
-	}
-
-	.actions {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.status {
-		font-size: 0.85rem;
-		color: var(--muted-foreground);
-		text-transform: capitalize;
 	}
 
 	.empty {

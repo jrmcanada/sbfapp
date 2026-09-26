@@ -89,12 +89,14 @@ export async function ensureTestUser({
 	email,
 	password,
 	status,
-	role
+	role,
+	displayName
 }: {
 	email: string;
 	password: string;
 	status: 'pending' | 'approved' | 'rejected';
 	role: 'member' | 'admin';
+	displayName?: string;
 }): Promise<string> {
 	const createRes = await fetch(`${url}/auth/v1/admin/users`, {
 		method: 'POST',
@@ -122,7 +124,9 @@ export async function ensureTestUser({
 	const profileRes = await fetch(`${url}/rest/v1/profiles?id=eq.${id}`, {
 		method: 'PATCH',
 		headers: { ...headers(), Prefer: 'return=minimal' },
-		body: JSON.stringify({ status, role })
+		body: JSON.stringify(
+			displayName ? { status, role, display_name: displayName } : { status, role }
+		)
 	});
 	if (!profileRes.ok)
 		throw new Error(`test profile update failed: ${profileRes.status} ${await profileRes.text()}`);
@@ -141,6 +145,46 @@ export async function deleteTestUser(id: string): Promise<void> {
 		headers: headers()
 	});
 	if (!res.ok) throw new Error(`test user cleanup failed: ${res.status} ${await res.text()}`);
+}
+
+/**
+ * A subscription row with a fake endpoint, so the Accounts screen has a
+ * device to count. Nothing in the e2e suite ever sends to it — the compose
+ * form is never submitted here — and it cascades away with its profile.
+ */
+export async function insertTestPushSubscription(profileId: string): Promise<void> {
+	const res = await fetch(`${url}/rest/v1/push_subscriptions`, {
+		method: 'POST',
+		headers: { ...headers(), Prefer: 'return=minimal' },
+		body: JSON.stringify({
+			profile_id: profileId,
+			endpoint: `https://push.invalid/e2e-${crypto.randomUUID()}`,
+			p256dh: 'test',
+			auth: 'test'
+		})
+	});
+	if (!res.ok)
+		throw new Error(`test subscription insert failed: ${res.status} ${await res.text()}`);
+}
+
+/** A history row only — inserts into the table directly, sends nothing. */
+export async function insertTestNotification(
+	createdBy: string,
+	title: string,
+	body: string
+): Promise<void> {
+	const res = await fetch(`${url}/rest/v1/notifications`, {
+		method: 'POST',
+		headers: { ...headers(), Prefer: 'return=minimal' },
+		body: JSON.stringify({
+			title,
+			body,
+			created_by: createdBy,
+			sent_at: new Date().toISOString()
+		})
+	});
+	if (!res.ok)
+		throw new Error(`test notification insert failed: ${res.status} ${await res.text()}`);
 }
 
 export async function deleteNotificationsByCreator(profileId: string): Promise<void> {

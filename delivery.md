@@ -2,18 +2,25 @@
 
 ## Current
 
-- **Feature:** Home page cosmetic refresh (no spec.md — a design-only
-  change, not a masterplan feature; approved via a mockup artifact with
-  3 options, human picked "Cards")
-- **Branch:** `feat/home-refresh`
-- **Status:** built and verified (check, lint, 55 unit tests, 35 e2e tests
-  all pass; visually confirmed against the real app, matches the approved
-  mockup). Not yet merged.
-- **Next action:** merge `feat/home-refresh` to `main` and redeploy (this
-  repo now has a GitHub remote — `git push` after merging, Netlify
-  auto-deploys on push to `main`).
+- **Feature:** Phase 6 — Admin functions (`docs/specs/06-admin/spec.md`,
+  from the human's `phase2.md`)
+- **Branch:** `feat/admin-phase2`
+- **Status:** built and verified locally (check, lint, 72 unit + 51 e2e
+  tests pass; screenshots checked). Committed, not merged or pushed.
+- **Next action:** (1) the human applies
+  `supabase/migrations/20260926000000_add_join_notified_at.sql` in the
+  Supabase SQL editor — it must be applied **before** the deploy so the
+  join alert can record that it fired; (2) merge to `main` and the human
+  pushes (the harness blocks Claude from pushing to `main`); (3) after
+  deploy, confirm the join alert once by hand with a real new sign-in.
 
 ## Done
+
+- **Home page refresh + header polish** (2026-09-26). "Cards" redesign,
+  logo, then header tweaks: name + Sign out moved into the purple band,
+  band pushed down with a plain strip above it (and a floor of
+  `env(safe-area-inset-top)`) so iOS's status-bar blur in the installed
+  PWA doesn't smear the band. Live on `main`.
 
 - **Phase 4b — Push Notifications** (2026-09-24). `push_subscriptions` +
   `notifications` tables, web push (VAPID), service worker, PWA manifest,
@@ -55,6 +62,23 @@
   before merge to `master` (fast-forward). Commit `3ac3f8c`.
 
 ## Decisions
+
+- 2026-09-26: **Phase 6 (admin functions) scope, confirmed with the human.**
+  `phase2.md` item 9 (grey out Calendar/Notifications for pending users)
+  was **dropped** — it would have meant letting pending users into Home,
+  changing the 4a gate; they keep the "Awaiting approval" page. No Admin
+  card on Home (only the admin-only Send Notification card); `/admin` is
+  reached by URL. New column `profiles.join_notified_at` (approved) makes
+  the "someone asked to join" push fire exactly once per sign-up (atomic
+  claim in `/auth/callback`; failures never block sign-in; not recorded in
+  notification history since `notifications.created_by` requires a
+  sender). Deleting an admin who approved accounts or sent notifications
+  is **refused with a message** rather than changing the `ON DELETE
+RESTRICT` audit-trail FKs. Emails are read from Supabase Auth with the
+  secret key, not copied into `profiles`. Every secret-key admin
+  load/action also calls `requireAdmin` on top of the route gate.
+  Testing kept to the notification lesson below: e2e seeds history rows
+  and fake subscriptions directly and never submits the compose form.
 
 - 2026-09-26: **The app is in real use — testing conventions need to
   account for that from now on, not just "shared DB, seed/cleanup."** A

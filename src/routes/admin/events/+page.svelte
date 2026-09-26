@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
+	import AdminNav from '$lib/components/AdminNav.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import type { PageProps } from './$types';
 
@@ -12,12 +12,7 @@
 <svelte:head><title>Upload events · SBF</title></svelte:head>
 
 <div class="admin-page">
-	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
-		<Button href={resolve('/calendar')} variant="ghost">View calendar</Button>
-		<Button href={resolve('/admin/accounts')} variant="ghost">Accounts</Button>
-		<Button href={resolve('/admin/notifications')} variant="ghost">Notifications</Button>
-	</header>
+	<AdminNav current="events" />
 
 	<h1>Upload events</h1>
 	<p class="hint">
@@ -65,11 +60,6 @@
 		padding: 1rem;
 		max-width: 36rem;
 		margin: 0 auto;
-	}
-
-	.toolbar {
-		display: flex;
-		gap: 0.5rem;
 	}
 
 	h1 {

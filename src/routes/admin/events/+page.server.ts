@@ -1,10 +1,12 @@
 import { fail } from '@sveltejs/kit';
 import { supabaseAdmin } from '$lib/server/supabase';
 import { parseEventsFile } from '$lib/server/events';
+import { requireAdmin } from '$lib/server/requireAdmin';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
+		requireAdmin(locals);
 		const formData = await request.formData();
 		const file = formData.get('file');
 

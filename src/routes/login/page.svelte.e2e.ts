@@ -17,8 +17,10 @@ for (const route of [
 	'/website',
 	'/calendar',
 	'/messages',
+	'/admin',
 	'/admin/events',
-	'/admin/accounts'
+	'/admin/accounts',
+	'/admin/notifications'
 ]) {
 	test(`anonymous visit to ${route} redirects to /login`, async ({ page }) => {
 		await page.goto(route);

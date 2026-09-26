@@ -1,10 +1,50 @@
 import { fail } from '@sveltejs/kit';
 import { supabaseAdmin } from '$lib/server/supabase';
 import { sendToAll } from '$lib/server/pushSend';
-import type { Actions } from './$types';
+import { requireAdmin } from '$lib/server/requireAdmin';
+import type { Actions, PageServerLoad } from './$types';
+
+const HISTORY_LIMIT = 50;
+
+type HistoryItem = {
+	id: string;
+	title: string;
+	body: string;
+	created_at: string;
+	sent_at: string | null;
+	sender: string;
+};
+
+export const load: PageServerLoad = async ({ locals }) => {
+	requireAdmin(locals);
+
+	const { data, error } = await supabaseAdmin
+		.from('notifications')
+		.select('id, title, body, created_at, sent_at, sender:profiles!created_by(display_name)')
+		.order('created_at', { ascending: false })
+		.limit(HISTORY_LIMIT);
+
+	// The embed is a single profile at runtime; supabase-js's untyped client
+	// just can't tell it isn't a list, so accept either shape.
+	const history: HistoryItem[] = (data ?? []).map((row) => {
+		const sender = Array.isArray(row.sender) ? row.sender[0] : row.sender;
+		return {
+			id: row.id,
+			title: row.title,
+			body: row.body,
+			created_at: row.created_at,
+			sent_at: row.sent_at,
+			sender: sender?.display_name ?? 'Unknown'
+		};
+	});
+
+	return { history, historyError: error?.message ?? null };
+};
 
 export const actions: Actions = {
-	default: async ({ request, locals: { user } }) => {
+	default: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const { user } = locals;
 		const formData = await request.formData();
 		const title = formData.get('title');
 		const body = formData.get('body');

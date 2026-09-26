@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
+	import AdminNav from '$lib/components/AdminNav.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { formatDateTime } from '$lib/format';
 	import type { PageProps } from './$types';
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	let submitting = $state(false);
 </script>
@@ -12,11 +13,7 @@
 <svelte:head><title>Send a notification · SBF</title></svelte:head>
 
 <div class="notifications-page">
-	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
-		<Button href={resolve('/admin/events')} variant="ghost">Events</Button>
-		<Button href={resolve('/admin/accounts')} variant="ghost">Accounts</Button>
-	</header>
+	<AdminNav current="notifications" />
 
 	<h1>Send a notification</h1>
 
@@ -53,6 +50,27 @@
 	{#if form?.error}
 		<p class="error" role="alert">{form.error}</p>
 	{/if}
+
+	<details class="history">
+		<summary>History ({data.history.length})</summary>
+		{#if data.historyError}
+			<p class="error" role="alert">Couldn't load history: {data.historyError}</p>
+		{:else if data.history.length === 0}
+			<p class="empty">Nothing has been sent yet.</p>
+		{:else}
+			<ul class="history-list">
+				{#each data.history as item (item.id)}
+					<li class="history-item">
+						<strong>{item.title}</strong>
+						<p>{item.body}</p>
+						<span class="meta">
+							{item.sender} · {item.sent_at ? formatDateTime(item.sent_at) : 'Not delivered'}
+						</span>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</details>
 </div>
 
 <style>
@@ -63,11 +81,6 @@
 		padding: 1rem;
 		max-width: 32rem;
 		margin: 0 auto;
-	}
-
-	.toolbar {
-		display: flex;
-		gap: 0.5rem;
 	}
 
 	h1 {
@@ -105,5 +118,38 @@
 
 	.error {
 		color: var(--destructive);
+	}
+
+	.history summary {
+		cursor: pointer;
+		font-weight: 600;
+	}
+
+	.history-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+
+	.history-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 0.6rem 0.75rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-md);
+		background: var(--card);
+	}
+
+	.history-item p {
+		font-size: 0.9rem;
+		white-space: pre-line;
+	}
+
+	.meta,
+	.empty {
+		font-size: 0.8rem;
+		color: var(--muted-foreground);
 	}
 </style>

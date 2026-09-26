@@ -98,6 +98,34 @@ describe('decideRedirect', () => {
 		expect(decideRedirect(accounts)).toBe('/');
 	});
 
+	it('gates the /admin menu itself, not just the screens under it', () => {
+		const member: GateInput = {
+			hasSession: true,
+			profileStatus: 'approved',
+			isAdmin: false,
+			routeId: '/admin'
+		};
+		expect(decideRedirect(member)).toBe('/');
+		expect(decideRedirect({ ...member, hasSession: false, profileStatus: null })).toBe('/login');
+		expect(decideRedirect({ ...member, isAdmin: true })).toBeNull();
+	});
+
+	it('never lets a pending or rejected admin into /admin/*', () => {
+		for (const profileStatus of ['pending', 'rejected'] as const) {
+			expect(
+				decideRedirect({ hasSession: true, profileStatus, isAdmin: true, routeId: '/admin' })
+			).toBe('/pending');
+			expect(
+				decideRedirect({
+					hasSession: true,
+					profileStatus,
+					isAdmin: true,
+					routeId: '/admin/accounts'
+				})
+			).toBe('/pending');
+		}
+	});
+
 	it('lets an approved admin use /admin/* routes', () => {
 		const input: GateInput = {
 			hasSession: true,

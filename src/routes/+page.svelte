@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Calendar, Globe, PlayCircle } from 'lucide-svelte';
+	import { Calendar, Globe, PlayCircle, Send } from 'lucide-svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationControl from '$lib/components/NotificationControl.svelte';
@@ -30,7 +30,7 @@
 
 	<div class="heading">
 		<h1>Welcome back</h1>
-		<p>Everything for Sudbury Bible Fellowship, in one place.</p>
+		<p>What's happening at Sudbury Bible Fellowship?</p>
 	</div>
 
 	<div class="cards">
@@ -48,6 +48,14 @@
 			href={resolve('/messages')}
 		/>
 		<NotificationControl />
+		{#if data.isAdmin}
+			<NavCard
+				icon={Send}
+				label="Send Notification"
+				sub="Write a message for everyone"
+				href={resolve('/admin/notifications')}
+			/>
+		{/if}
 	</div>
 </main>
 
