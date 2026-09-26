@@ -82,3 +82,13 @@ test('next/prev navigation changes the visible month', async ({ page }) => {
 	await page.getByRole('link', { name: 'Prev' }).click();
 	await expect(page.getByRole('heading', { name: 'August 2026' })).toBeVisible();
 });
+
+test('shows the app header, with the name and a single Sign out', async ({ page }) => {
+	await page.goto('/calendar');
+
+	const header = page.locator('header.band');
+	await expect(header).toContainText('SBF');
+	await expect(header).toContainText(testEmail);
+	await expect(header.getByRole('button', { name: 'Sign out' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(1);
+});

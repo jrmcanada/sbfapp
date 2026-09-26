@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatMonthParam, getMonthGrid, monthLabel, shiftMonth } from '$lib/calendar';
 	import type { PageProps } from './$types';
@@ -35,6 +36,8 @@
 </script>
 
 <svelte:head><title>Calendar · SBF</title></svelte:head>
+
+<AppHeader signedIn={data.signedIn} displayName={data.displayName} />
 
 <div class="calendar-page">
 	<header class="toolbar">

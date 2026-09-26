@@ -97,3 +97,16 @@ test('links to the full archive on sbf.church', async ({ page }) => {
 		'https://sbf.church/messages/'
 	);
 });
+
+test('shows the app header, with the name and a single Sign out', async ({ page }) => {
+	await page.route('https://sbf.church/messages/', (route) =>
+		route.fulfill({ contentType: 'text/html', body: '' })
+	);
+	await page.goto('/messages');
+
+	const header = page.locator('header.band');
+	await expect(header).toContainText('SBF');
+	await expect(header).toContainText(testEmail);
+	await expect(header.getByRole('button', { name: 'Sign out' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(1);
+});

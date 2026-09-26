@@ -16,6 +16,12 @@
 
 ## Done
 
+- **Shared app header on Calendar and Messages** (2026-09-26). The purple
+  band (plus the blank strip above it for iOS's status-bar blur) is now an
+  `AppHeader` component used by Home, Calendar and Messages. The layout's
+  plain grey session bar is skipped on those three routes and still shown
+  on every other page (Website, admin screens, etc.).
+
 - **Home page refresh + header polish** (2026-09-26). "Cards" redesign,
   logo, then header tweaks: name + Sign out moved into the purple band,
   band pushed down with a plain strip above it (and a floor of

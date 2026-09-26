@@ -6,11 +6,15 @@
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
+
+	// These pages render their own AppHeader (with the name and Sign out), so
+	// they skip the plain session bar every other page gets.
+	const ownsHeader = ['/', '/calendar', '/messages'];
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-{#if data.signedIn && page.url.pathname !== '/'}
+{#if data.signedIn && !ownsHeader.includes(page.route.id ?? '')}
 	<div class="session-bar">
 		<span>{data.displayName}</span>
 		<form method="POST" action="/auth/signout">
