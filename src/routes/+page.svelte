@@ -10,7 +10,7 @@
 
 <main class="home">
 	<header class="band">
-		<Logo variant="light" size={24} />
+		<Logo variant="light" size={32} />
 		<span class="word">SBF</span>
 	</header>
 
@@ -57,7 +57,8 @@
 		font-family: var(--font-display);
 		color: var(--primary-foreground);
 		font-weight: 600;
-		font-size: 1rem;
+		font-size: 1.33rem;
+		line-height: 1;
 		letter-spacing: 0.02em;
 	}
 

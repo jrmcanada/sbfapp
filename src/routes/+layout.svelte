@@ -30,5 +30,18 @@
 		font-size: 0.85rem;
 		color: var(--muted-foreground);
 		border-bottom: 1px solid var(--border);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.session-bar span {
+		/* Matches the Sign out button's own fixed height (size="sm" = h-7)
+		   and internal centering, so the two sit on the same visual baseline
+		   instead of the button's fixed box and the span's natural line
+		   height landing a pixel or two apart. */
+		display: inline-flex;
+		align-items: center;
+		height: 1.75rem;
+		line-height: 1;
 	}
 </style>

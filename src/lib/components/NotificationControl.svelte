@@ -66,7 +66,7 @@
 				: status === 'unsupported'
 					? 'Not supported on this browser'
 					: status === 'subscribed'
-						? 'On for this device'
+						? 'Tap to disable'
 						: status === 'checking'
 							? 'Checking…'
 							: 'Tap to enable'
