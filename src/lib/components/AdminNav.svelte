@@ -14,9 +14,9 @@
 </script>
 
 <header class="toolbar">
-	<Button href={resolve('/')} variant="ghost">Home</Button>
+	<Button href={resolve('/')} variant="outline">Home</Button>
 	{#each sections.filter((s) => s.key !== current) as section (section.key)}
-		<Button href={resolve(section.href)} variant="ghost">{section.label}</Button>
+		<Button href={resolve(section.href)} variant="outline">{section.label}</Button>
 	{/each}
 </header>
 

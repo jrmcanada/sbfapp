@@ -24,7 +24,7 @@
 
 <div class="messages-page">
 	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
+		<Button href={resolve('/')} variant="outline">Home</Button>
 		<Button href={ARCHIVE_URL} target="_blank" rel="noopener noreferrer" variant="outline">
 			Full archive
 		</Button>

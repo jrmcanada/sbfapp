@@ -9,7 +9,7 @@
 
 <div class="admin-page">
 	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
+		<Button href={resolve('/')} variant="outline">Home</Button>
 	</header>
 
 	<h1>Admin</h1>

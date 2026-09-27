@@ -41,7 +41,7 @@
 
 <div class="calendar-page">
 	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
+		<Button href={resolve('/')} variant="outline">Home</Button>
 		<h1>{label}</h1>
 		<nav class="nav">
 			<Button

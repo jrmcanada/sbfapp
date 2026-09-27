@@ -23,5 +23,5 @@
 	</form>
 	<Button size="sm" variant="ghost" onclick={() => (confirming = false)}>Cancel</Button>
 {:else}
-	<Button size="sm" variant="ghost" onclick={() => (confirming = true)}>Delete</Button>
+	<Button size="sm" variant="outline" onclick={() => (confirming = true)}>Delete</Button>
 {/if}

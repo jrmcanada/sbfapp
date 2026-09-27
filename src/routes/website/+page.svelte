@@ -9,7 +9,7 @@
 
 <div class="website">
 	<header class="toolbar">
-		<Button href={resolve('/')} variant="ghost">Home</Button>
+		<Button href={resolve('/')} variant="outline">Home</Button>
 		<Button href={SITE_URL} target="_blank" rel="noopener noreferrer" variant="outline">
 			Open in browser
 		</Button>
