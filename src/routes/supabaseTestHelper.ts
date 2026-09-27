@@ -47,7 +47,13 @@ function headers() {
 }
 
 export async function insertTestEvents(
-	events: { title: string; description?: string | null; start_date: string; end_date: string }[]
+	events: {
+		title: string;
+		description?: string | null;
+		start_date: string;
+		end_date: string;
+		start_time?: string | null;
+	}[]
 ): Promise<string[]> {
 	const res = await fetch(`${url}/rest/v1/events`, {
 		method: 'POST',

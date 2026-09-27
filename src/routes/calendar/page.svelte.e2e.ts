@@ -15,18 +15,43 @@ import {
 
 const multiDayTitle = `E2E Youth Conference ${Date.now()}`;
 const singleDayTitle = `E2E Christmas Service ${Date.now()}`;
+const timedTitle = `E2E Morning Service ${Date.now()}`;
+const untimedTitle = `E2E All Day Marker ${Date.now()}`;
 let seededIds: string[] = [];
 let testUserId: string;
 const testEmail = `e2e-calendar-${Date.now()}@example.com`;
 
 test.beforeAll(async () => {
+	// Postgres's bulk insert requires every row in one call to share the
+	// same set of keys — start_time: null makes that explicit everywhere.
 	seededIds = await insertTestEvents([
-		{ title: multiDayTitle, description: null, start_date: '2026-09-10', end_date: '2026-09-12' },
+		{
+			title: multiDayTitle,
+			description: null,
+			start_date: '2026-09-10',
+			end_date: '2026-09-12',
+			start_time: null
+		},
 		{
 			title: singleDayTitle,
 			description: 'Come celebrate',
 			start_date: '2026-09-15',
-			end_date: '2026-09-15'
+			end_date: '2026-09-15',
+			start_time: null
+		},
+		{
+			title: timedTitle,
+			description: null,
+			start_date: '2026-09-20',
+			end_date: '2026-09-20',
+			start_time: '11:15'
+		},
+		{
+			title: untimedTitle,
+			description: null,
+			start_date: '2026-09-20',
+			end_date: '2026-09-20',
+			start_time: null
 		}
 	]);
 	testUserId = await ensureTestUser({
@@ -67,6 +92,20 @@ test('clicking a day shows its event description', async ({ page }) => {
 	await page.goto('/calendar?month=2026-09');
 	await page.getByRole('button', { name: new RegExp(singleDayTitle) }).click();
 	await expect(page.getByText('Come celebrate')).toBeVisible();
+});
+
+test('shows the time in AM/PM before the title in the day-detail view, but not on the grid', async ({
+	page
+}) => {
+	await page.goto('/calendar?month=2026-09');
+
+	const cell = page.getByRole('button', { name: new RegExp(timedTitle) });
+	await expect(cell).not.toContainText('AM');
+	await expect(cell).not.toContainText('11:15');
+
+	await cell.click();
+	await expect(page.getByRole('heading', { name: `11:15 AM - ${timedTitle}` })).toBeVisible();
+	await expect(page.getByRole('heading', { name: untimedTitle, exact: true })).toBeVisible();
 });
 
 test('next/prev navigation changes the visible month', async ({ page }) => {

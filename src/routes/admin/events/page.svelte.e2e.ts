@@ -42,16 +42,32 @@ test.afterEach(async () => {
 	await deleteTestEvents(ids);
 });
 
-test('a well-formed file uploads successfully', async ({ page }) => {
+test('a well-formed file with a time uploads successfully', async ({ page }) => {
 	await page.goto('/admin/events');
 	await page.setInputFiles('input[type=file]', {
 		name: 'events.txt',
 		mimeType: 'text/plain',
-		buffer: Buffer.from(`2026-12-25 | ${title} | Come celebrate\n`)
+		buffer: Buffer.from(`2026-12-25 | 09:30 | ${title} | Come celebrate\n`)
 	});
 	await page.getByRole('button', { name: 'Upload' }).click();
 
 	await expect(page.getByRole('status')).toHaveText('Added 1 event.');
+	await expect(page.locator('.event').filter({ hasText: title })).toContainText('9:30 AM');
+});
+
+test('a well-formed file with a blank time uploads with no fixed time', async ({ page }) => {
+	await page.goto('/admin/events');
+	await page.setInputFiles('input[type=file]', {
+		name: 'events.txt',
+		mimeType: 'text/plain',
+		buffer: Buffer.from(`2026-12-25 | | ${title}\n`)
+	});
+	await page.getByRole('button', { name: 'Upload' }).click();
+
+	await expect(page.getByRole('status')).toHaveText('Added 1 event.');
+	const row = page.locator('.event').filter({ hasText: title });
+	await expect(row).not.toContainText('AM');
+	await expect(row).not.toContainText('PM');
 });
 
 test('a malformed file is rejected, nothing added', async ({ page }) => {
@@ -59,11 +75,24 @@ test('a malformed file is rejected, nothing added', async ({ page }) => {
 	await page.setInputFiles('input[type=file]', {
 		name: 'events.txt',
 		mimeType: 'text/plain',
-		buffer: Buffer.from(`not-a-date | ${title}\n`)
+		buffer: Buffer.from(`not-a-date | | ${title}\n`)
 	});
 	await page.getByRole('button', { name: 'Upload' }).click();
 
 	await expect(page.getByRole('alert')).toContainText('Line 1');
+	expect(await findEventIdsByTitle(title)).toEqual([]);
+});
+
+test('an invalid (non-24-hour) time is rejected, nothing added', async ({ page }) => {
+	await page.goto('/admin/events');
+	await page.setInputFiles('input[type=file]', {
+		name: 'events.txt',
+		mimeType: 'text/plain',
+		buffer: Buffer.from(`2026-12-25 | 9:30pm | ${title}\n`)
+	});
+	await page.getByRole('button', { name: 'Upload' }).click();
+
+	await expect(page.getByRole('alert')).toContainText('invalid time');
 	expect(await findEventIdsByTitle(title)).toEqual([]);
 });
 
@@ -79,7 +108,7 @@ test('the upload page loads with a visible Browse button and Upload disabled unt
 	await page.setInputFiles('input[type=file]', {
 		name: 'events.txt',
 		mimeType: 'text/plain',
-		buffer: Buffer.from('2026-12-25 | x\n')
+		buffer: Buffer.from('2026-12-25 | | x\n')
 	});
 	await expect(page.getByText('events.txt')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Upload' })).toBeEnabled();
@@ -140,6 +169,89 @@ test('cancelling a delete keeps the event', async ({ page }) => {
 
 		await expect(row.getByRole('button', { name: 'Delete' })).toBeVisible();
 		expect(await findEventIdsByTitle(upcomingTitle)).toHaveLength(1);
+	} finally {
+		await deleteTestEvents(ids);
+	}
+});
+
+test('an admin can edit every field of an event', async ({ page }) => {
+	const originalTitle = `E2E edit-me ${Date.now()}`;
+	const newTitle = `E2E edited ${Date.now()}`;
+	const ids = await insertTestEvents([
+		{
+			title: originalTitle,
+			description: 'original description',
+			start_date: '2099-02-01',
+			end_date: '2099-02-01',
+			start_time: '09:00'
+		}
+	]);
+	try {
+		await page.goto('/admin/events');
+		const row = page.locator('.event').filter({ hasText: originalTitle });
+		await row.getByRole('button', { name: 'Edit' }).click();
+
+		// Once in edit mode, the title moves from visible text into an
+		// <input>'s value, which `hasText` can't see — so from here on,
+		// locate the editing row by its form instead of by title text.
+		const editForm = page.locator('.event').filter({ has: page.locator('form.edit-form') });
+
+		// Prefilled with the current values.
+		await expect(editForm.locator('input[name="start_date"]')).toHaveValue('2099-02-01');
+		await expect(editForm.locator('input[name="start_time"]')).toHaveValue('09:00');
+		await expect(editForm.locator('input[name="title"]')).toHaveValue(originalTitle);
+
+		await editForm.locator('input[name="start_time"]').fill('14:45');
+		await editForm.locator('input[name="title"]').fill(newTitle);
+		await editForm.locator('textarea[name="description"]').fill('updated description');
+		await editForm.getByRole('button', { name: 'Save' }).click();
+
+		const updatedRow = page.locator('.event').filter({ hasText: newTitle });
+		await expect(updatedRow).toContainText('2:45 PM');
+		await expect(page.locator('.event').filter({ hasText: originalTitle })).toHaveCount(0);
+	} finally {
+		await deleteTestEvents(await findEventIdsByTitle(newTitle));
+		await deleteTestEvents(ids);
+	}
+});
+
+test('an invalid edit is rejected and the event is unchanged', async ({ page }) => {
+	const ids = await insertTestEvents([
+		{ title: upcomingTitle, start_date: '2099-03-01', end_date: '2099-03-01' }
+	]);
+	try {
+		await page.goto('/admin/events');
+		const row = page.locator('.event').filter({ hasText: upcomingTitle });
+		await row.getByRole('button', { name: 'Edit' }).click();
+
+		const editForm = page.locator('.event').filter({ has: page.locator('form.edit-form') });
+		// A whitespace-only title passes the input's native `required` check
+		// (non-empty), so this actually exercises the server-side trim() check.
+		await editForm.locator('input[name="title"]').fill('   ');
+		await editForm.getByRole('button', { name: 'Save' }).click();
+
+		await expect(editForm.getByRole('alert')).toContainText('Title is required');
+		expect(await findEventIdsByTitle(upcomingTitle)).toHaveLength(1);
+	} finally {
+		await deleteTestEvents(ids);
+	}
+});
+
+test('cancelling an edit keeps the event unchanged', async ({ page }) => {
+	const ids = await insertTestEvents([
+		{ title: upcomingTitle, start_date: '2099-01-01', end_date: '2099-01-01' }
+	]);
+	try {
+		await page.goto('/admin/events');
+		const row = page.locator('.event').filter({ hasText: upcomingTitle });
+		await row.getByRole('button', { name: 'Edit' }).click();
+
+		const editForm = page.locator('.event').filter({ has: page.locator('form.edit-form') });
+		await editForm.locator('input[name="title"]').fill('this should not be saved');
+		await editForm.getByRole('button', { name: 'Cancel' }).click();
+
+		await expect(page.locator('.event').filter({ hasText: upcomingTitle })).toBeVisible();
+		await expect(page.getByText('this should not be saved')).toHaveCount(0);
 	} finally {
 		await deleteTestEvents(ids);
 	}

@@ -16,6 +16,21 @@
 
 ## Done
 
+- **Event start time + editing** (2026-09-27, `docs/specs/02-calendar/spec.md`
+  revision). `events.start_time` (nullable Postgres `time`, migration
+  applied by the human). Upload format gains a `HH:MM` field (24-hour, or
+  blank for no fixed time) between date and title. Same-day events sort
+  chronologically by time (untimed ones after, in upload order) via a
+  per-cell sort in `getMonthGrid`. The monthly grid still shows only
+  titles; the day-detail view prefixes the time in 12-hour AM/PM
+  (`formatTime12h`). `/admin/events` gets an Edit button (before Delete)
+  opening an inline form for every field, validated the same way as
+  upload. Two real bugs found and fixed while writing e2e coverage (not
+  app bugs): Postgres's bulk insert requires every row in one call to
+  share identical keys, and a Playwright locator that filters by title
+  text goes stale once that text moves into an `<input>` in edit mode —
+  fixed by locating the editing row via `form.edit-form` instead.
+
 - **Blank session bar on /website** (2026-09-27). The name/Sign out are
   gone from the top of the Website page, but the bar keeps its height
   (visibility: hidden, not removed/display:none) so the Home / Open in

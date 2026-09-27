@@ -26,3 +26,16 @@ export function formatDay(isoDate: string): string {
 		timeZone: 'UTC'
 	});
 }
+
+/**
+ * Formats a wall-clock time ("HH:MM" or "HH:MM:SS", as Postgres returns a
+ * `time` column) as 12-hour with AM/PM, e.g. "11:15 AM". Pure string math —
+ * a wall-clock time has no timezone to get wrong by routing it through Date.
+ */
+export function formatTime12h(time: string): string {
+	const [hourStr, minute] = time.split(':');
+	const hour24 = Number(hourStr);
+	const period = hour24 >= 12 ? 'PM' : 'AM';
+	const hour12 = hour24 % 12 || 12;
+	return `${hour12}:${minute} ${period}`;
+}

@@ -8,6 +8,15 @@ function toIsoDate(date: Date): string {
 	return date.toISOString().slice(0, 10);
 }
 
+/** Events with a start_time sort chronologically before ones without,
+ * which keep whatever order they were given in (stable sort). */
+function byStartTime(a: CalendarEvent, b: CalendarEvent): number {
+	if (a.start_time === b.start_time) return 0;
+	if (a.start_time === null) return 1;
+	if (b.start_time === null) return -1;
+	return a.start_time < b.start_time ? -1 : 1;
+}
+
 /** Sunday-first grid for `year`/`month` (1-12), including leading/trailing
  * days from adjacent months so every week row has 7 days. */
 export function getMonthGrid(year: number, month: number, events: CalendarEvent[]): DayCell[] {
@@ -23,7 +32,7 @@ export function getMonthGrid(year: number, month: number, events: CalendarEvent[
 		cells.push({
 			date: iso,
 			inMonth: date.getUTCMonth() === month - 1,
-			events: events.filter((e) => e.start_date <= iso && iso <= e.end_date)
+			events: events.filter((e) => e.start_date <= iso && iso <= e.end_date).sort(byStartTime)
 		});
 	}
 	return cells;

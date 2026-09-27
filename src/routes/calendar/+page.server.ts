@@ -6,8 +6,9 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
 
 	const { data, error } = await supabase
 		.from('events')
-		.select('id, title, description, start_date, end_date')
-		.order('start_date', { ascending: true });
+		.select('id, title, description, start_date, end_date, start_time')
+		.order('start_date', { ascending: true })
+		.order('start_time', { ascending: true, nullsFirst: false });
 
 	if (error) {
 		return { year, month, events: [], loadError: error.message };

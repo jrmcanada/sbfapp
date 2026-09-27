@@ -26,7 +26,8 @@ describe('getMonthGrid', () => {
 				title: 'Solo Event',
 				description: null,
 				start_date: '2026-09-15',
-				end_date: '2026-09-15'
+				end_date: '2026-09-15',
+				start_time: null
 			}
 		];
 		const grid = getMonthGrid(2026, 9, events);
@@ -42,7 +43,8 @@ describe('getMonthGrid', () => {
 				title: 'Conference',
 				description: null,
 				start_date: '2026-09-10',
-				end_date: '2026-09-12'
+				end_date: '2026-09-12',
+				start_time: null
 			}
 		];
 		const grid = getMonthGrid(2026, 9, events);
@@ -54,11 +56,57 @@ describe('getMonthGrid', () => {
 
 	it('lists multiple events on the same day', () => {
 		const events: CalendarEvent[] = [
-			{ id: '1', title: 'A', description: null, start_date: '2026-09-15', end_date: '2026-09-15' },
-			{ id: '2', title: 'B', description: null, start_date: '2026-09-15', end_date: '2026-09-15' }
+			{
+				id: '1',
+				title: 'A',
+				description: null,
+				start_date: '2026-09-15',
+				end_date: '2026-09-15',
+				start_time: null
+			},
+			{
+				id: '2',
+				title: 'B',
+				description: null,
+				start_date: '2026-09-15',
+				end_date: '2026-09-15',
+				start_time: null
+			}
 		];
 		const grid = getMonthGrid(2026, 9, events);
 		expect(grid.find((c) => c.date === '2026-09-15')?.events).toHaveLength(2);
+	});
+
+	it('sorts same-day events chronologically by start_time, timed before untimed', () => {
+		const events: CalendarEvent[] = [
+			{
+				id: 'untimed',
+				title: 'No fixed time',
+				description: null,
+				start_date: '2026-09-15',
+				end_date: '2026-09-15',
+				start_time: null
+			},
+			{
+				id: 'evening',
+				title: 'Evening Meeting',
+				description: null,
+				start_date: '2026-09-15',
+				end_date: '2026-09-15',
+				start_time: '19:00'
+			},
+			{
+				id: 'morning',
+				title: 'Morning Service',
+				description: null,
+				start_date: '2026-09-15',
+				end_date: '2026-09-15',
+				start_time: '09:00'
+			}
+		];
+		const grid = getMonthGrid(2026, 9, events);
+		const ids = grid.find((c) => c.date === '2026-09-15')?.events.map((e) => e.id);
+		expect(ids).toEqual(['morning', 'evening', 'untimed']);
 	});
 });
 

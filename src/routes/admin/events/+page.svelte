@@ -4,8 +4,10 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ConfirmDelete from '$lib/components/ConfirmDelete.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { formatDay } from '$lib/format';
+	import { formatDay, formatTime12h } from '$lib/format';
 	import type { PageProps } from './$types';
+
+	type EventItem = (typeof data.upcoming)[number];
 
 	let { data, form }: PageProps = $props();
 
@@ -13,27 +15,108 @@
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let fileName = $state<string | null>(null);
 
+	let editingId = $state<string | null>(null);
+	let editDraft = $state({
+		start_date: '',
+		end_date: '',
+		start_time: '',
+		title: '',
+		description: ''
+	});
+
+	function metaLine(event: EventItem): string {
+		const range = dateRange(event.start_date, event.end_date);
+		return event.start_time ? `${range} · ${formatTime12h(event.start_time)}` : range;
+	}
+
 	function dateRange(start: string, end: string): string {
 		return start === end ? formatDay(start) : `${formatDay(start)} – ${formatDay(end)}`;
+	}
+
+	function startEdit(event: EventItem) {
+		editingId = event.id;
+		editDraft = {
+			start_date: event.start_date,
+			end_date: event.end_date,
+			// Postgres returns "HH:MM:SS"; the time input only wants "HH:MM"
+			// (seconds are never meaningful here — parseTimeField never sets them).
+			start_time: event.start_time?.slice(0, 5) ?? '',
+			title: event.title,
+			description: event.description ?? ''
+		};
+	}
+
+	function cancelEdit() {
+		editingId = null;
 	}
 </script>
 
 <svelte:head><title>Events · SBF</title></svelte:head>
 
-{#snippet eventList(events: typeof data.upcoming, emptyText: string)}
+{#snippet eventList(events: EventItem[], emptyText: string)}
 	{#if events.length === 0}
 		<p class="empty">{emptyText}</p>
 	{:else}
 		<ul class="list">
 			{#each events as event (event.id)}
 				<li class="event">
-					<div class="details">
-						<span class="title">{event.title}</span>
-						<span class="meta">{dateRange(event.start_date, event.end_date)}</span>
-					</div>
-					<div class="actions">
-						<ConfirmDelete id={event.id} />
-					</div>
+					{#if editingId === event.id}
+						<form
+							class="edit-form"
+							method="POST"
+							action="?/edit"
+							use:enhance={() => {
+								submitting = true;
+								return async ({ result, update }) => {
+									if (result.type === 'success') editingId = null;
+									await update();
+									submitting = false;
+								};
+							}}
+						>
+							<input type="hidden" name="id" value={event.id} />
+							<div class="edit-row">
+								<label>
+									Start date
+									<input type="date" name="start_date" bind:value={editDraft.start_date} required />
+								</label>
+								<label>
+									End date
+									<input type="date" name="end_date" bind:value={editDraft.end_date} required />
+								</label>
+								<label>
+									Time
+									<input type="time" name="start_time" bind:value={editDraft.start_time} />
+								</label>
+							</div>
+							<label>
+								Title
+								<input type="text" name="title" bind:value={editDraft.title} required />
+							</label>
+							<label>
+								Description
+								<textarea name="description" bind:value={editDraft.description} rows="2"></textarea>
+							</label>
+							{#if form?.editError && form?.editingId === event.id}
+								<p class="error" role="alert">{form.editError}</p>
+							{/if}
+							<div class="actions">
+								<Button type="submit" size="sm" disabled={submitting}>
+									{submitting ? 'Saving…' : 'Save'}
+								</Button>
+								<Button type="button" size="sm" variant="ghost" onclick={cancelEdit}>Cancel</Button>
+							</div>
+						</form>
+					{:else}
+						<div class="details">
+							<span class="title">{event.title}</span>
+							<span class="meta">{metaLine(event)}</span>
+						</div>
+						<div class="actions">
+							<Button size="sm" variant="outline" onclick={() => startEdit(event)}>Edit</Button>
+							<ConfirmDelete id={event.id} />
+						</div>
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -47,9 +130,10 @@
 
 	<h1>Upload events</h1>
 	<p class="hint">
-		One event per line: <code>YYYY-MM-DD[ to YYYY-MM-DD] | Title | Description</code>. Description
-		is optional. Lines starting with <code>#</code> are ignored. Uploading adds to the existing events
-		— it doesn't replace them.
+		One event per line: <code>YYYY-MM-DD[ to YYYY-MM-DD] | HH:MM | Title | Description</code>. Time
+		is 24-hour (e.g. <code>09:30</code>) or left blank for no fixed time. Description is optional.
+		Lines starting with <code>#</code> are ignored. Uploading adds to the existing events — it doesn't
+		replace them.
 	</p>
 
 	<form
@@ -222,5 +306,38 @@
 	.past summary {
 		cursor: pointer;
 		font-weight: 600;
+	}
+
+	.edit-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		width: 100%;
+	}
+
+	.edit-row {
+		display: flex;
+		gap: 0.6rem;
+		flex-wrap: wrap;
+	}
+
+	.edit-form label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		font-size: 0.8rem;
+		color: var(--muted-foreground);
+		flex: 1;
+		min-width: 8rem;
+	}
+
+	.edit-form input,
+	.edit-form textarea {
+		font: inherit;
+		padding: 0.4rem 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		background: var(--background);
+		color: var(--foreground);
 	}
 </style>

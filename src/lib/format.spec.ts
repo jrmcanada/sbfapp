@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDay, todayInChurchZone } from './format';
+import { formatDate, formatDay, formatTime12h, todayInChurchZone } from './format';
 
 describe('formatDate', () => {
 	it('uses the church timezone, not the runtime one', () => {
@@ -11,6 +11,25 @@ describe('formatDate', () => {
 describe('formatDay', () => {
 	it('never shifts a date-only value by timezone', () => {
 		expect(formatDay('2026-09-27')).toBe('Sep 27, 2026');
+	});
+});
+
+describe('formatTime12h', () => {
+	it('formats a morning time', () => {
+		expect(formatTime12h('11:15')).toBe('11:15 AM');
+	});
+
+	it('formats an afternoon time', () => {
+		expect(formatTime12h('14:05')).toBe('2:05 PM');
+	});
+
+	it('handles noon and midnight', () => {
+		expect(formatTime12h('12:00')).toBe('12:00 PM');
+		expect(formatTime12h('00:00')).toBe('12:00 AM');
+	});
+
+	it('accepts the HH:MM:SS shape Postgres returns', () => {
+		expect(formatTime12h('09:30:00')).toBe('9:30 AM');
 	});
 });
 

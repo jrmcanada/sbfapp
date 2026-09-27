@@ -3,6 +3,7 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatMonthParam, getMonthGrid, monthLabel, shiftMonth } from '$lib/calendar';
+	import { formatTime12h } from '$lib/format';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -98,7 +99,7 @@
 				<h2>{selectedCell.date}</h2>
 				{#each selectedCell.events as event (event.id)}
 					<article class="event">
-						<h3>{event.title}</h3>
+						<h3>{event.start_time ? `${formatTime12h(event.start_time)} - ` : ''}{event.title}</h3>
 						{#if event.description}
 							<p>{event.description}</p>
 						{/if}

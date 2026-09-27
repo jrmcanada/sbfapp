@@ -75,11 +75,36 @@ Plain text, one event per line:
 
 ## Out of scope
 
-- Editing or deleting individual events once uploaded.
+- ~~Editing or deleting individual events once uploaded.~~ Deleting shipped
+  in Phase 6; editing and time-of-day ship in the 2026-09-27 revision below.
 - Recurring events.
 - Any pull from sbf.church for calendar data (superseded by admin entry).
 - App-wide navigation shell (same deferral as Phase 1).
-- Time-of-day for events — dates only, no start/end times.
+- ~~Time-of-day for events — dates only, no start/end times.~~ See the
+  2026-09-27 revision.
+
+## Revision (2026-09-27): event start time + editing
+
+- **`events.start_time`** — nullable Postgres `time`. Optional: an event
+  with no fixed time (an all-day marker, a holiday) leaves it blank.
+- **Upload format** gains a field: `<start_date>[ to <end_date>] | <start_time or blank> | <title> | <description>`
+  — `start_time` is 24-hour `HH:MM` (e.g. `09:30`) or blank; validated the
+  same all-or-nothing way as the date. Example:
+  ```
+  2026-11-08 | 09:30 | Sunday Service
+  2026-12-25 | | Christmas Day
+  ```
+- **Ordering**: within a day, events with a time sort chronologically
+  before events without one (which keep upload order among themselves).
+  A multi-day event shows the same `start_time` on every day it spans.
+- **Display**: the monthly grid still shows only the title (no time — the
+  grid is a title-density view, not a schedule). The day-detail view (after
+  tapping a date) shows the time first, 12-hour with AM/PM, e.g.
+  `11:15 AM - Family Bible Hour`; an event with no time shows just the title.
+- **Editing**: `/admin/events` gets an Edit button (before Delete) on each
+  event, opening an inline form for all fields (dates, time, title,
+  description), validated the same way as upload, saved via a dedicated
+  form action.
 
 ## Acceptance criteria
 

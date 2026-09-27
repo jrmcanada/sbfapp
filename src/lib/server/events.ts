@@ -7,13 +7,20 @@ export type LineError = { line: number; message: string };
 export type ParseResult = { events: ParsedEvent[]; errors: LineError[] };
 
 const DATE_RANGE = /^(\d{4}-\d{2}-\d{2})(?:\s+to\s+(\d{4}-\d{2}-\d{2}))?$/;
+const TIME_24H = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function isValidCalendarDate(iso: string): boolean {
+export function isValidCalendarDate(iso: string): boolean {
 	const [year, month, day] = iso.split('-').map(Number);
 	const date = new Date(Date.UTC(year, month - 1, day));
 	return (
 		date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 	);
+}
+
+/** A blank field means "no fixed time" (`null`); anything else must be 24-hour `HH:MM`. */
+export function parseTimeField(raw: string): { ok: true; value: string | null } | { ok: false } {
+	if (raw === '') return { ok: true, value: null };
+	return TIME_24H.test(raw) ? { ok: true, value: raw } : { ok: false };
 }
 
 /**
@@ -31,15 +38,15 @@ export function parseEventsFile(content: string): ParseResult {
 
 		const lineNumber = index + 1;
 		const parts = line.split('|').map((p) => p.trim());
-		if (parts.length < 2 || parts.length > 3) {
+		if (parts.length < 3 || parts.length > 4) {
 			errors.push({
 				line: lineNumber,
-				message: `expected 2 or 3 fields separated by "|", got ${parts.length}`
+				message: `expected 3 or 4 fields separated by "|", got ${parts.length}`
 			});
 			return;
 		}
 
-		const [datePart, title, description] = parts;
+		const [datePart, timePart, title, description] = parts;
 
 		const match = DATE_RANGE.exec(datePart);
 		if (!match) {
@@ -61,6 +68,15 @@ export function parseEventsFile(content: string): ParseResult {
 			return;
 		}
 
+		const time = parseTimeField(timePart);
+		if (!time.ok) {
+			errors.push({
+				line: lineNumber,
+				message: `invalid time "${timePart}", expected 24-hour HH:MM (e.g. 09:30) or blank`
+			});
+			return;
+		}
+
 		if (title === '') {
 			errors.push({ line: lineNumber, message: 'title is required' });
 			return;
@@ -70,7 +86,8 @@ export function parseEventsFile(content: string): ParseResult {
 			title,
 			description: description || null,
 			start_date: startDate,
-			end_date: endDate
+			end_date: endDate,
+			start_time: time.value
 		});
 	});
 
