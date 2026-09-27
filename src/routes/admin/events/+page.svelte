@@ -5,10 +5,22 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ConfirmDelete from '$lib/components/ConfirmDelete.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { formatDay, formatDayHeading, formatTime12h } from '$lib/format';
+	import { formatDay, formatDayHeading, formatTime12h, todayInChurchZone } from '$lib/format';
 	import type { PageProps } from './$types';
 
 	type EventItem = (typeof data.upcoming)[number];
+	type EventDraft = {
+		start_date: string;
+		end_date: string;
+		start_time: string;
+		title: string;
+		description: string;
+	};
+
+	function blankDraft(): EventDraft {
+		const today = todayInChurchZone();
+		return { start_date: today, end_date: today, start_time: '', title: '', description: '' };
+	}
 
 	let { data, form }: PageProps = $props();
 
@@ -17,13 +29,10 @@
 	let fileName = $state<string | null>(null);
 
 	let editingId = $state<string | null>(null);
-	let editDraft = $state({
-		start_date: '',
-		end_date: '',
-		start_time: '',
-		title: '',
-		description: ''
-	});
+	let editDraft = $state<EventDraft>(blankDraft());
+
+	let addingNew = $state(false);
+	let newDraft = $state<EventDraft>(blankDraft());
 
 	// The day heading already shows start_date, so this only adds what it
 	// doesn't: the end date for a multi-day event, and the time.
@@ -50,9 +59,43 @@
 	function cancelEdit() {
 		editingId = null;
 	}
+
+	function startAdd() {
+		newDraft = blankDraft();
+		addingNew = true;
+	}
+
+	function cancelAdd() {
+		addingNew = false;
+	}
 </script>
 
 <svelte:head><title>Events · SBF</title></svelte:head>
+
+{#snippet eventFields(draft: EventDraft)}
+	<div class="edit-row">
+		<label>
+			Start date
+			<input type="date" name="start_date" bind:value={draft.start_date} required />
+		</label>
+		<label>
+			End date
+			<input type="date" name="end_date" bind:value={draft.end_date} required />
+		</label>
+		<label>
+			Time
+			<input type="time" name="start_time" bind:value={draft.start_time} />
+		</label>
+	</div>
+	<label>
+		Title
+		<input type="text" name="title" bind:value={draft.title} required />
+	</label>
+	<label>
+		Description
+		<textarea name="description" bind:value={draft.description} rows="2"></textarea>
+	</label>
+{/snippet}
 
 {#snippet eventList(events: EventItem[], emptyText: string)}
 	{#if events.length === 0}
@@ -78,34 +121,7 @@
 								}}
 							>
 								<input type="hidden" name="id" value={event.id} />
-								<div class="edit-row">
-									<label>
-										Start date
-										<input
-											type="date"
-											name="start_date"
-											bind:value={editDraft.start_date}
-											required
-										/>
-									</label>
-									<label>
-										End date
-										<input type="date" name="end_date" bind:value={editDraft.end_date} required />
-									</label>
-									<label>
-										Time
-										<input type="time" name="start_time" bind:value={editDraft.start_time} />
-									</label>
-								</div>
-								<label>
-									Title
-									<input type="text" name="title" bind:value={editDraft.title} required />
-								</label>
-								<label>
-									Description
-									<textarea name="description" bind:value={editDraft.description} rows="2"
-									></textarea>
-								</label>
+								{@render eventFields(editDraft)}
 								{#if form?.editError && form?.editingId === event.id}
 									<p class="error" role="alert">{form.editError}</p>
 								{/if}
@@ -191,6 +207,35 @@
 				{/each}
 			</ul>
 		</div>
+	{/if}
+
+	{#if addingNew}
+		<form
+			class="edit-form add-form"
+			method="POST"
+			action="?/add"
+			use:enhance={() => {
+				submitting = true;
+				return async ({ result, update }) => {
+					if (result.type === 'success') addingNew = false;
+					await update();
+					submitting = false;
+				};
+			}}
+		>
+			{@render eventFields(newDraft)}
+			{#if form?.addError}
+				<p class="error" role="alert">{form.addError}</p>
+			{/if}
+			<div class="actions">
+				<Button type="submit" size="sm" disabled={submitting}>
+					{submitting ? 'Adding…' : 'Add event'}
+				</Button>
+				<Button type="button" size="sm" variant="ghost" onclick={cancelAdd}>Cancel</Button>
+			</div>
+		</form>
+	{:else}
+		<Button variant="outline" onclick={startAdd}>Add event</Button>
 	{/if}
 
 	<h2>Upcoming events ({data.upcoming.length})</h2>
@@ -335,6 +380,13 @@
 		flex-direction: column;
 		gap: 0.6rem;
 		width: 100%;
+	}
+
+	.add-form {
+		padding: 0.75rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-md);
+		background: var(--card);
 	}
 
 	.edit-row {

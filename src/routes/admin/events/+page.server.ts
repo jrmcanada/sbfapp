@@ -54,6 +54,55 @@ export const actions: Actions = {
 		return { deleted: true };
 	},
 
+	add: async ({ request, locals }) => {
+		requireAdmin(locals);
+		const formData = await request.formData();
+		const startDate = formData.get('start_date');
+		const endDate = formData.get('end_date');
+		const startTimeRaw = formData.get('start_time');
+		const title = formData.get('title');
+		const description = formData.get('description');
+
+		if (
+			typeof startDate !== 'string' ||
+			typeof endDate !== 'string' ||
+			typeof startTimeRaw !== 'string' ||
+			typeof title !== 'string' ||
+			typeof description !== 'string'
+		) {
+			return fail(400, { addError: 'Missing fields.' });
+		}
+
+		// Same validation as edit and the bulk upload (events.ts) — a single
+		// event's worth of it.
+		if (!isValidCalendarDate(startDate) || !isValidCalendarDate(endDate)) {
+			return fail(400, { addError: 'Not a real calendar date.' });
+		}
+		if (endDate < startDate) {
+			return fail(400, { addError: 'End date is before start date.' });
+		}
+		const time = parseTimeField(startTimeRaw.trim());
+		if (!time.ok) {
+			return fail(400, {
+				addError: 'Invalid time — expected 24-hour HH:MM (e.g. 09:30) or blank.'
+			});
+		}
+		if (title.trim() === '') {
+			return fail(400, { addError: 'Title is required.' });
+		}
+
+		const { error } = await supabaseAdmin.from('events').insert({
+			start_date: startDate,
+			end_date: endDate,
+			start_time: time.value,
+			title: title.trim(),
+			description: description.trim() || null
+		});
+		if (error) return fail(500, { addError: error.message });
+
+		return { added: true };
+	},
+
 	edit: async ({ request, locals }) => {
 		requireAdmin(locals);
 		const formData = await request.formData();

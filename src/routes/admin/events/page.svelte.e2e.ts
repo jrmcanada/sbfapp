@@ -285,3 +285,51 @@ test('same-day events are grouped under one heading, chronologically', async ({ 
 		await deleteTestEvents(ids);
 	}
 });
+
+test('an admin can add a single event through the form', async ({ page }) => {
+	const newTitle = `E2E added ${Date.now()}`;
+	try {
+		await page.goto('/admin/events');
+		await page.getByRole('button', { name: 'Add event' }).click();
+
+		const addForm = page.locator('form.add-form');
+		await addForm.locator('input[name="start_date"]').fill('2099-05-10');
+		await addForm.locator('input[name="end_date"]').fill('2099-05-10');
+		await addForm.locator('input[name="start_time"]').fill('10:00');
+		await addForm.locator('input[name="title"]').fill(newTitle);
+		await addForm.locator('textarea[name="description"]').fill('added via the form');
+		await addForm.getByRole('button', { name: 'Add event' }).click();
+
+		const row = page.locator('.event').filter({ hasText: newTitle });
+		await expect(row).toBeVisible();
+		await expect(row).toContainText('10:00 AM');
+		await expect(page.getByRole('heading', { name: /May 10, 2099/ })).toBeVisible();
+		await expect(page.locator('form.add-form')).toHaveCount(0);
+	} finally {
+		await deleteTestEvents(await findEventIdsByTitle(newTitle));
+	}
+});
+
+test('an invalid add is rejected and nothing is created', async ({ page }) => {
+	await page.goto('/admin/events');
+	await page.getByRole('button', { name: 'Add event' }).click();
+
+	const addForm = page.locator('form.add-form');
+	// A native time input can't hold a malformed value at all — a
+	// whitespace-only title is what's actually reachable through this UI
+	// (it passes the native `required` check but not the server's trim()).
+	await addForm.locator('input[name="title"]').fill('   ');
+	await addForm.getByRole('button', { name: 'Add event' }).click();
+
+	await expect(addForm.getByRole('alert')).toContainText('Title is required');
+});
+
+test('cancelling Add event discards the form', async ({ page }) => {
+	await page.goto('/admin/events');
+	await page.getByRole('button', { name: 'Add event' }).click();
+	await expect(page.locator('form.add-form')).toBeVisible();
+
+	await page.locator('form.add-form').getByRole('button', { name: 'Cancel' }).click();
+	await expect(page.locator('form.add-form')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Add event' })).toBeVisible();
+});

@@ -16,6 +16,12 @@
 
 ## Done
 
+- **Add a single event** (2026-09-27). `/admin/events` gets an "Add event"
+  button opening the same field set as Edit (dates, time, title,
+  description), defaulting to today's date. Shares the field markup with
+  Edit via an `eventFields` snippet rather than duplicating it. Validated
+  the same way as Edit/upload via a new `add` action.
+
 - **Group admin events by day** (2026-09-27). `/admin/events`'s Upcoming/Past
   lists now show a day heading (e.g. "SUNDAY, SEP 27, 2026") above each
   date's events, chronological by time within the day
