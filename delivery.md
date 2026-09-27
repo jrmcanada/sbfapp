@@ -16,6 +16,15 @@
 
 ## Done
 
+- **Delete events + Browse button** (2026-09-27). `/admin/events` now lists
+  upcoming events (soonest first) and past ones (collapsed), each with a
+  two-step Delete (shared `ConfirmDelete` component, also used by Accounts).
+  The native file input's "Browse…" is now a real button; Upload is disabled
+  until a file is chosen. The upload action was renamed `upload` (SvelteKit
+  can't mix a default action with named ones). e2e sign-ins are now cached
+  per test user — the suite had grown past Supabase Auth's sign-in rate
+  limit and started failing intermittently.
+
 - **Shared app header on Calendar and Messages** (2026-09-26). The purple
   band (plus the blank strip above it for iOS's status-bar blur) is now an
   `AppHeader` component used by Home, Calendar and Messages. The layout's

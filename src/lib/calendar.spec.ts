@@ -5,6 +5,7 @@ import {
 	monthLabel,
 	parseMonthParam,
 	shiftMonth,
+	splitByToday,
 	type CalendarEvent
 } from './calendar';
 
@@ -97,5 +98,34 @@ describe('shiftMonth', () => {
 describe('formatMonthParam', () => {
 	it('zero-pads the month', () => {
 		expect(formatMonthParam(2026, 3)).toBe('2026-03');
+	});
+});
+
+describe('splitByToday', () => {
+	const ev = (id: string, start_date: string, end_date: string) => ({ id, start_date, end_date });
+
+	it('puts events that have not ended yet in upcoming, soonest first', () => {
+		const { upcoming } = splitByToday(
+			[ev('later', '2026-12-01', '2026-12-01'), ev('sooner', '2026-10-01', '2026-10-01')],
+			'2026-09-27'
+		);
+		expect(upcoming.map((e) => e.id)).toEqual(['sooner', 'later']);
+	});
+
+	it('puts ended events in past, most recent first', () => {
+		const { past } = splitByToday(
+			[ev('old', '2026-01-01', '2026-01-01'), ev('recent', '2026-09-01', '2026-09-01')],
+			'2026-09-27'
+		);
+		expect(past.map((e) => e.id)).toEqual(['recent', 'old']);
+	});
+
+	it('counts an event happening today, or a multi-day one still running, as upcoming', () => {
+		const { upcoming, past } = splitByToday(
+			[ev('today', '2026-09-27', '2026-09-27'), ev('running', '2026-09-25', '2026-09-28')],
+			'2026-09-27'
+		);
+		expect(upcoming.map((e) => e.id).sort()).toEqual(['running', 'today']);
+		expect(past).toEqual([]);
 	});
 });

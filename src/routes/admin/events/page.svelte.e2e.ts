@@ -4,6 +4,7 @@ import {
 	deleteTestUser,
 	ensureTestUser,
 	findEventIdsByTitle,
+	insertTestEvents,
 	signInAsTestUser
 } from '../../supabaseTestHelper';
 
@@ -66,8 +67,80 @@ test('a malformed file is rejected, nothing added', async ({ page }) => {
 	expect(await findEventIdsByTitle(title)).toEqual([]);
 });
 
-test('the upload page loads with its form', async ({ page }) => {
+test('the upload page loads with a visible Browse button and Upload disabled until a file is chosen', async ({
+	page
+}) => {
 	await page.goto('/admin/events');
 	await expect(page.getByRole('heading', { name: 'Upload events' })).toBeVisible();
-	await expect(page.locator('input[type=file]')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Browse' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Upload' })).toBeDisabled();
+	await expect(page.getByText('No file chosen')).toBeVisible();
+
+	await page.setInputFiles('input[type=file]', {
+		name: 'events.txt',
+		mimeType: 'text/plain',
+		buffer: Buffer.from('2026-12-25 | x\n')
+	});
+	await expect(page.getByText('events.txt')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Upload' })).toBeEnabled();
+});
+
+// Seeded directly (never through the upload form) with titles unique to
+// this run, and removed in a finally.
+const upcomingTitle = `E2E upcoming ${Date.now()}`;
+const pastTitle = `E2E past ${Date.now()}`;
+
+test('events are listed as upcoming or past', async ({ page }) => {
+	const ids = await insertTestEvents([
+		{ title: upcomingTitle, start_date: '2099-01-01', end_date: '2099-01-02' },
+		{ title: pastTitle, start_date: '2001-01-01', end_date: '2001-01-01' }
+	]);
+	try {
+		await page.goto('/admin/events');
+		const upcoming = page.locator('.event').filter({ hasText: upcomingTitle });
+		await expect(upcoming).toBeVisible();
+		await expect(upcoming).toContainText('Jan 1, 2099 – Jan 2, 2099');
+
+		// The past one is inside the collapsed "Past events" section.
+		await expect(page.locator('.past .event').filter({ hasText: pastTitle })).toBeAttached();
+		await expect(page.locator('.past').getByText(upcomingTitle)).toHaveCount(0);
+	} finally {
+		await deleteTestEvents(ids);
+	}
+});
+
+test('an admin can delete an event after confirming', async ({ page }) => {
+	const ids = await insertTestEvents([
+		{ title: upcomingTitle, start_date: '2099-01-01', end_date: '2099-01-01' }
+	]);
+	try {
+		await page.goto('/admin/events');
+		const row = page.locator('.event').filter({ hasText: upcomingTitle });
+		await row.getByRole('button', { name: 'Delete' }).click();
+		// The first click only asks; nothing is deleted yet.
+		expect(await findEventIdsByTitle(upcomingTitle)).toHaveLength(1);
+		await row.getByRole('button', { name: 'Confirm delete' }).click();
+
+		await expect(page.locator('.event').filter({ hasText: upcomingTitle })).toHaveCount(0);
+		expect(await findEventIdsByTitle(upcomingTitle)).toEqual([]);
+	} finally {
+		await deleteTestEvents(ids);
+	}
+});
+
+test('cancelling a delete keeps the event', async ({ page }) => {
+	const ids = await insertTestEvents([
+		{ title: upcomingTitle, start_date: '2099-01-01', end_date: '2099-01-01' }
+	]);
+	try {
+		await page.goto('/admin/events');
+		const row = page.locator('.event').filter({ hasText: upcomingTitle });
+		await row.getByRole('button', { name: 'Delete' }).click();
+		await row.getByRole('button', { name: 'Cancel' }).click();
+
+		await expect(row.getByRole('button', { name: 'Delete' })).toBeVisible();
+		expect(await findEventIdsByTitle(upcomingTitle)).toHaveLength(1);
+	} finally {
+		await deleteTestEvents(ids);
+	}
 });

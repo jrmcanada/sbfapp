@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type Session } from '@supabase/supabase-js';
 import type { BrowserContext } from '@playwright/test';
 
 /**
@@ -204,17 +204,26 @@ export async function deleteNotificationsByCreator(profileId: string): Promise<v
  * internals through page.evaluate, which only works in dev — production
  * preview serves hashed chunk files, not importable source paths.
  */
+// Supabase Auth rate-limits sign-ins, and the suite signs in before every
+// test — so each test user signs in once per worker and the session is reused.
+const sessions = new Map<string, Session>();
+
 export async function signInAsTestUser(
 	context: BrowserContext,
 	baseURL: string,
 	email: string,
 	password: string
 ): Promise<void> {
-	const client = createClient(url, publishableKey);
-	const { data, error } = await client.auth.signInWithPassword({ email, password });
-	if (error || !data.session) throw new Error(`test sign-in failed: ${error?.message}`);
+	let session = sessions.get(email);
+	if (!session) {
+		const client = createClient(url, publishableKey);
+		const { data, error } = await client.auth.signInWithPassword({ email, password });
+		if (error || !data.session) throw new Error(`test sign-in failed: ${error?.message}`);
+		session = data.session;
+		sessions.set(email, session);
+	}
 
-	const value = 'base64-' + Buffer.from(JSON.stringify(data.session)).toString('base64');
+	const value = 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64');
 	await context.addCookies([
 		{
 			name: `sb-${projectRef}-auth-token`,

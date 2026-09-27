@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { Account } from '$lib/accounts';
+	import ConfirmDelete from '$lib/components/ConfirmDelete.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatDate } from '$lib/format';
 
 	let { account, isSelf }: { account: Account; isSelf: boolean } = $props();
-
-	let confirmingDelete = $state(false);
 
 	const notificationsText = $derived(
 		account.deviceCount === 0
@@ -43,23 +42,7 @@
 		{/if}
 
 		{#if !isSelf}
-			{#if confirmingDelete}
-				<form
-					method="POST"
-					action="?/delete"
-					use:enhance={() =>
-						async ({ update }) => {
-							await update();
-							confirmingDelete = false;
-						}}
-				>
-					<input type="hidden" name="id" value={account.id} />
-					<Button type="submit" size="sm" variant="destructive">Confirm delete</Button>
-				</form>
-				<Button size="sm" variant="ghost" onclick={() => (confirmingDelete = false)}>Cancel</Button>
-			{:else}
-				<Button size="sm" variant="ghost" onclick={() => (confirmingDelete = true)}>Delete</Button>
-			{/if}
+			<ConfirmDelete id={account.id} />
 		{/if}
 	</div>
 </li>

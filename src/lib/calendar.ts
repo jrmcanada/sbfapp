@@ -57,3 +57,20 @@ export function shiftMonth(
 export function formatMonthParam(year: number, month: number): string {
 	return `${year}-${String(month).padStart(2, '0')}`;
 }
+
+/**
+ * Splits events into ones still on or ahead (soonest first) and ones that
+ * have ended (most recent first). `today` is an ISO date, YYYY-MM-DD.
+ */
+export function splitByToday<T extends { start_date: string; end_date: string }>(
+	events: T[],
+	today: string
+): { upcoming: T[]; past: T[] } {
+	const upcoming = events
+		.filter((e) => e.end_date >= today)
+		.sort((a, b) => a.start_date.localeCompare(b.start_date));
+	const past = events
+		.filter((e) => e.end_date < today)
+		.sort((a, b) => b.start_date.localeCompare(a.start_date));
+	return { upcoming, past };
+}
