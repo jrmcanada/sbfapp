@@ -18,12 +18,18 @@
 		'/admin/events',
 		'/admin/notifications'
 	];
+
+	// /website keeps the bar's height (so its own Home/Open in browser row
+	// doesn't shift up into the area iOS blurs during the pull-down bounce)
+	// but without the name/Sign out — the iframe fills the rest of the
+	// screen, and Sign out is one tap away on Home.
+	const blankSessionBar = ['/website'];
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 {#if data.signedIn && !ownsHeader.includes(page.route.id ?? '')}
-	<div class="session-bar">
+	<div class="session-bar" class:blank={blankSessionBar.includes(page.route.id ?? '')}>
 		<span>{data.displayName}</span>
 		<form method="POST" action="/auth/signout">
 			<Button type="submit" variant="ghost" size="sm">Sign out</Button>
@@ -45,6 +51,13 @@
 		border-bottom: 1px solid var(--border);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.session-bar.blank {
+		/* Reserves the same box (height, safe-area padding) without painting
+		   or exposing its content — not display:none, which would collapse
+		   the space and let the page below it butt up against the notch. */
+		visibility: hidden;
 	}
 
 	.session-bar span {

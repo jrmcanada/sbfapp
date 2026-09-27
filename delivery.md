@@ -16,6 +16,12 @@
 
 ## Done
 
+- **Blank session bar on /website** (2026-09-27). The name/Sign out are
+  gone from the top of the Website page, but the bar keeps its height
+  (visibility: hidden, not removed/display:none) so the Home / Open in
+  browser row doesn't shift up into the zone iOS blurs during the
+  pull-down bounce.
+
 - **Admin button on the Accounts/Events/Notifications header nav** (2026-09-27).
   `AdminNav` now shows Home, Admin (back to the /admin menu), then the
   other two admin sections.
