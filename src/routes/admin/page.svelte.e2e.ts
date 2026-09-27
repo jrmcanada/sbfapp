@@ -43,11 +43,14 @@ const screens = [
 ];
 
 for (const { path, own, others } of screens) {
-	test(`${path} has header links to Home and the other two admin screens`, async ({ page }) => {
+	test(`${path} has header links to Home, Admin, and the other two admin screens`, async ({
+		page
+	}) => {
 		await page.goto(path);
 		const header = page.locator('.toolbar');
 
 		await expect(header.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+		await expect(header.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
 		for (const name of others) {
 			await expect(header.getByRole('link', { name })).toBeVisible();
 		}

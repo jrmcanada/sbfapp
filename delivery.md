@@ -16,6 +16,10 @@
 
 ## Done
 
+- **Admin button on the Accounts/Events/Notifications header nav** (2026-09-27).
+  `AdminNav` now shows Home, Admin (back to the /admin menu), then the
+  other two admin sections.
+
 - **Admin card on Home + purple header on all admin screens** (2026-09-27).
   Home gets an admin-only "Admin" card (Shield icon) linking to /admin,
   placed above the existing Send Notification card — same admin-only
