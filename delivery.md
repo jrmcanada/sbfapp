@@ -16,6 +16,16 @@
 
 ## Done
 
+- **Outline buttons now visible on the cream page** (2026-09-27). The
+  outline Button variant (Home, admin nav, Prev/Next, Delete, Browse,
+  "Full archive", "Open in browser") had a border nearly the same colour
+  as the page background. Picked from 4 mockup options ("D — Lavender
+  wash"): a faint tint of --primary as the fill plus a darker
+  --primary/--border mix as the border, both defined once as
+  color-mix() custom properties in layout.css so they re-resolve
+  correctly under .dark too. Dropped the old dark:-specific overrides on
+  this variant since the new tokens already adapt per theme.
+
 - **Delete events + Browse button** (2026-09-27). `/admin/events` now lists
   upcoming events (soonest first) and past ones (collapsed), each with a
   two-step Delete (shared `ConfirmDelete` component, also used by Accounts).

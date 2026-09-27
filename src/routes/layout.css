@@ -84,6 +84,14 @@
 	--sidebar-accent-foreground: #21005c;
 	--sidebar-border: #ebe7dd;
 	--sidebar-ring: #4898ff;
+
+	/* Outline buttons (Home, admin nav, Prev/Next, Delete, …) were nearly
+	   invisible with a cream border on the cream page — a faint tint of
+	   --primary plus a matching darker border reads as a button on a small
+	   screen. Defined once here (not duplicated under .dark) since var()
+	   inside color-mix() re-resolves --primary/--card per theme already. */
+	--outline-background: color-mix(in srgb, var(--primary) 6%, var(--card));
+	--outline-border: color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
 .dark {
