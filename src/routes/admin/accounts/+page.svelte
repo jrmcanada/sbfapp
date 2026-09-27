@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AccountRow from '$lib/components/AccountRow.svelte';
 	import AdminNav from '$lib/components/AdminNav.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -14,6 +15,8 @@
 </script>
 
 <svelte:head><title>Accounts · SBF</title></svelte:head>
+
+<AppHeader signedIn={data.signedIn} displayName={data.displayName} />
 
 <div class="accounts-page">
 	<AdminNav current="accounts" />

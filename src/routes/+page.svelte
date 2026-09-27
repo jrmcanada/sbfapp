@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Calendar, Globe, PlayCircle, Send } from 'lucide-svelte';
+	import { Calendar, Globe, PlayCircle, Send, Shield } from 'lucide-svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationControl from '$lib/components/NotificationControl.svelte';
@@ -35,6 +35,12 @@
 		/>
 		<NotificationControl />
 		{#if data.isAdmin}
+			<NavCard
+				icon={Shield}
+				label="Admin"
+				sub="Accounts, events and notifications"
+				href={resolve('/admin')}
+			/>
 			<NavCard
 				icon={Send}
 				label="Send Notification"

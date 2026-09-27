@@ -16,6 +16,15 @@
 
 ## Done
 
+- **Admin card on Home + purple header on all admin screens** (2026-09-27).
+  Home gets an admin-only "Admin" card (Shield icon) linking to /admin,
+  placed above the existing Send Notification card — same admin-only
+  pattern (not merely hidden, not in the page at all for a non-admin).
+  The admin menu, Accounts, Events and Notifications now render
+  `AppHeader` (added to +layout.svelte's `ownsHeader`), matching
+  Home/Calendar/Messages, instead of the plain grey session bar. Their
+  own in-page nav (Home + the other two admin links) is unchanged below it.
+
 - **Outline buttons now visible on the cream page** (2026-09-27). The
   outline Button variant (Home, admin nav, Prev/Next, Delete, Browse,
   "Full archive", "Open in browser") had a border nearly the same colour

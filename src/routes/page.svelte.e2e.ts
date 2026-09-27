@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { deleteTestUser, ensureTestUser, signInAsTestUser } from './supabaseTestHelper';
 
-// The Send Notification card is admin-only: it must not merely be hidden,
-// it must not be in the page at all for anyone else.
+// The Admin and Send Notification cards are admin-only: they must not
+// merely be hidden, they must not be in the page at all for anyone else.
 
-test('an admin sees Send Notification, below the Notifications card', async ({
+test('an admin sees Admin and Send Notification, below the Notifications card', async ({
 	page,
 	context,
 	baseURL
@@ -20,6 +20,10 @@ test('an admin sees Send Notification, below the Notifications card', async ({
 		await signInAsTestUser(context, baseURL!, email, 'TestPassword123!');
 		await page.goto('/');
 
+		const admin = page.getByRole('link', { name: /^Admin/ });
+		await expect(admin).toBeVisible();
+		await expect(admin).toHaveAttribute('href', '/admin');
+
 		const send = page.getByRole('link', { name: /Send Notification/ });
 		await expect(send).toBeVisible();
 		await expect(send).toHaveAttribute('href', '/admin/notifications');
@@ -28,14 +32,16 @@ test('an admin sees Send Notification, below the Notifications card', async ({
 			.getByRole('button', { name: /Notifications/ })
 			.first()
 			.boundingBox();
+		const adminBox = await admin.boundingBox();
 		const sendBox = await send.boundingBox();
-		expect(sendBox!.y).toBeGreaterThan(notificationsBox!.y);
+		expect(adminBox!.y).toBeGreaterThan(notificationsBox!.y);
+		expect(sendBox!.y).toBeGreaterThan(adminBox!.y);
 	} finally {
 		await deleteTestUser(id);
 	}
 });
 
-test('a regular member is not shown Send Notification at all', async ({
+test('a regular member is not shown Admin or Send Notification at all', async ({
 	page,
 	context,
 	baseURL
@@ -52,6 +58,7 @@ test('a regular member is not shown Send Notification at all', async ({
 		await page.goto('/');
 
 		await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+		await expect(page.getByRole('link', { name: /^Admin/ })).toHaveCount(0);
 		await expect(page.getByText('Send Notification')).toHaveCount(0);
 	} finally {
 		await deleteTestUser(id);

@@ -1,11 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Bell, CalendarDays, Users } from 'lucide-svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head><title>Admin · SBF</title></svelte:head>
+
+<AppHeader signedIn={data.signedIn} displayName={data.displayName} />
 
 <div class="admin-page">
 	<header class="toolbar">

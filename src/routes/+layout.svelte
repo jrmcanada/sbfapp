@@ -9,7 +9,15 @@
 
 	// These pages render their own AppHeader (with the name and Sign out), so
 	// they skip the plain session bar every other page gets.
-	const ownsHeader = ['/', '/calendar', '/messages'];
+	const ownsHeader = [
+		'/',
+		'/calendar',
+		'/messages',
+		'/admin',
+		'/admin/accounts',
+		'/admin/events',
+		'/admin/notifications'
+	];
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>

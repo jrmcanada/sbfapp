@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import AdminNav from '$lib/components/AdminNav.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ConfirmDelete from '$lib/components/ConfirmDelete.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatDay } from '$lib/format';
@@ -38,6 +39,8 @@
 		</ul>
 	{/if}
 {/snippet}
+
+<AppHeader signedIn={data.signedIn} displayName={data.displayName} />
 
 <div class="admin-page">
 	<AdminNav current="events" />

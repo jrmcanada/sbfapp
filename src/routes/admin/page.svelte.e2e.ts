@@ -54,3 +54,16 @@ for (const { path, own, others } of screens) {
 		await expect(header.getByRole('link', { name: own })).toHaveCount(0);
 	});
 }
+
+for (const path of ['/admin', '/admin/accounts', '/admin/events', '/admin/notifications']) {
+	test(`${path} shows the same app header as the other screens`, async ({ page }) => {
+		await page.goto(path);
+
+		const band = page.locator('header.band');
+		await expect(band).toContainText('SBF');
+		await expect(band).toContainText(adminEmail);
+		await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(1);
+		// The old plain grey bar shouldn't render alongside the new header.
+		await expect(page.locator('.session-bar')).toHaveCount(0);
+	});
+}

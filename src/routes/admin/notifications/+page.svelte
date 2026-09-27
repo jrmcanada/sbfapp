@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import AdminNav from '$lib/components/AdminNav.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatDateTime } from '$lib/format';
 	import type { PageProps } from './$types';
@@ -11,6 +12,8 @@
 </script>
 
 <svelte:head><title>Send a notification · SBF</title></svelte:head>
+
+<AppHeader signedIn={data.signedIn} displayName={data.displayName} />
 
 <div class="notifications-page">
 	<AdminNav current="notifications" />
