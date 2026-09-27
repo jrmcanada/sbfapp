@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { groupEventsByDay } from '$lib/calendar';
 	import AdminNav from '$lib/components/AdminNav.svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ConfirmDelete from '$lib/components/ConfirmDelete.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { formatDay, formatTime12h } from '$lib/format';
+	import { formatDay, formatDayHeading, formatTime12h } from '$lib/format';
 	import type { PageProps } from './$types';
 
 	type EventItem = (typeof data.upcoming)[number];
@@ -24,13 +25,13 @@
 		description: ''
 	});
 
+	// The day heading already shows start_date, so this only adds what it
+	// doesn't: the end date for a multi-day event, and the time.
 	function metaLine(event: EventItem): string {
-		const range = dateRange(event.start_date, event.end_date);
-		return event.start_time ? `${range} · ${formatTime12h(event.start_time)}` : range;
-	}
-
-	function dateRange(start: string, end: string): string {
-		return start === end ? formatDay(start) : `${formatDay(start)} – ${formatDay(end)}`;
+		const parts: string[] = [];
+		if (event.end_date !== event.start_date) parts.push(`– ${formatDay(event.end_date)}`);
+		if (event.start_time) parts.push(formatTime12h(event.start_time));
+		return parts.join(' · ');
 	}
 
 	function startEdit(event: EventItem) {
@@ -57,69 +58,82 @@
 	{#if events.length === 0}
 		<p class="empty">{emptyText}</p>
 	{:else}
-		<ul class="list">
-			{#each events as event (event.id)}
-				<li class="event">
-					{#if editingId === event.id}
-						<form
-							class="edit-form"
-							method="POST"
-							action="?/edit"
-							use:enhance={() => {
-								submitting = true;
-								return async ({ result, update }) => {
-									if (result.type === 'success') editingId = null;
-									await update();
-									submitting = false;
-								};
-							}}
-						>
-							<input type="hidden" name="id" value={event.id} />
-							<div class="edit-row">
+		{#each groupEventsByDay(events) as group (group.date)}
+			<h3 class="day-heading">{formatDayHeading(group.date)}</h3>
+			<ul class="list">
+				{#each group.events as event (event.id)}
+					<li class="event">
+						{#if editingId === event.id}
+							<form
+								class="edit-form"
+								method="POST"
+								action="?/edit"
+								use:enhance={() => {
+									submitting = true;
+									return async ({ result, update }) => {
+										if (result.type === 'success') editingId = null;
+										await update();
+										submitting = false;
+									};
+								}}
+							>
+								<input type="hidden" name="id" value={event.id} />
+								<div class="edit-row">
+									<label>
+										Start date
+										<input
+											type="date"
+											name="start_date"
+											bind:value={editDraft.start_date}
+											required
+										/>
+									</label>
+									<label>
+										End date
+										<input type="date" name="end_date" bind:value={editDraft.end_date} required />
+									</label>
+									<label>
+										Time
+										<input type="time" name="start_time" bind:value={editDraft.start_time} />
+									</label>
+								</div>
 								<label>
-									Start date
-									<input type="date" name="start_date" bind:value={editDraft.start_date} required />
+									Title
+									<input type="text" name="title" bind:value={editDraft.title} required />
 								</label>
 								<label>
-									End date
-									<input type="date" name="end_date" bind:value={editDraft.end_date} required />
+									Description
+									<textarea name="description" bind:value={editDraft.description} rows="2"
+									></textarea>
 								</label>
-								<label>
-									Time
-									<input type="time" name="start_time" bind:value={editDraft.start_time} />
-								</label>
+								{#if form?.editError && form?.editingId === event.id}
+									<p class="error" role="alert">{form.editError}</p>
+								{/if}
+								<div class="actions">
+									<Button type="submit" size="sm" disabled={submitting}>
+										{submitting ? 'Saving…' : 'Save'}
+									</Button>
+									<Button type="button" size="sm" variant="ghost" onclick={cancelEdit}>
+										Cancel
+									</Button>
+								</div>
+							</form>
+						{:else}
+							<div class="details">
+								<span class="title">{event.title}</span>
+								{#if metaLine(event)}
+									<span class="meta">{metaLine(event)}</span>
+								{/if}
 							</div>
-							<label>
-								Title
-								<input type="text" name="title" bind:value={editDraft.title} required />
-							</label>
-							<label>
-								Description
-								<textarea name="description" bind:value={editDraft.description} rows="2"></textarea>
-							</label>
-							{#if form?.editError && form?.editingId === event.id}
-								<p class="error" role="alert">{form.editError}</p>
-							{/if}
 							<div class="actions">
-								<Button type="submit" size="sm" disabled={submitting}>
-									{submitting ? 'Saving…' : 'Save'}
-								</Button>
-								<Button type="button" size="sm" variant="ghost" onclick={cancelEdit}>Cancel</Button>
+								<Button size="sm" variant="outline" onclick={() => startEdit(event)}>Edit</Button>
+								<ConfirmDelete id={event.id} />
 							</div>
-						</form>
-					{:else}
-						<div class="details">
-							<span class="title">{event.title}</span>
-							<span class="meta">{metaLine(event)}</span>
-						</div>
-						<div class="actions">
-							<Button size="sm" variant="outline" onclick={() => startEdit(event)}>Edit</Button>
-							<ConfirmDelete id={event.id} />
-						</div>
-					{/if}
-				</li>
-			{/each}
-		</ul>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/each}
 	{/if}
 {/snippet}
 
@@ -261,11 +275,19 @@
 		list-style: disc;
 	}
 
+	.day-heading {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--muted-foreground);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		margin: 0.9rem 0 0.4rem;
+	}
+
 	.list {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		margin-top: 0.5rem;
 	}
 
 	.event {

@@ -128,7 +128,10 @@ test('events are listed as upcoming or past', async ({ page }) => {
 		await page.goto('/admin/events');
 		const upcoming = page.locator('.event').filter({ hasText: upcomingTitle });
 		await expect(upcoming).toBeVisible();
-		await expect(upcoming).toContainText('Jan 1, 2099 – Jan 2, 2099');
+		// The start date is the day heading above the row; the row itself only
+		// adds what the heading doesn't say — here, the end date.
+		await expect(page.getByRole('heading', { name: /Jan 1, 2099/ })).toBeVisible();
+		await expect(upcoming).toContainText('– Jan 2, 2099');
 
 		// The past one is inside the collapsed "Past events" section.
 		await expect(page.locator('.past .event').filter({ hasText: pastTitle })).toBeAttached();
@@ -252,6 +255,32 @@ test('cancelling an edit keeps the event unchanged', async ({ page }) => {
 
 		await expect(page.locator('.event').filter({ hasText: upcomingTitle })).toBeVisible();
 		await expect(page.getByText('this should not be saved')).toHaveCount(0);
+	} finally {
+		await deleteTestEvents(ids);
+	}
+});
+
+test('same-day events are grouped under one heading, chronologically', async ({ page }) => {
+	const stamp = Date.now();
+	const morning = `E2E morning ${stamp}`;
+	const evening = `E2E evening ${stamp}`;
+	const otherDay = `E2E other day ${stamp}`;
+	const ids = await insertTestEvents([
+		{ title: evening, start_date: '2099-04-01', end_date: '2099-04-01', start_time: '19:00' },
+		{ title: morning, start_date: '2099-04-01', end_date: '2099-04-01', start_time: '09:00' },
+		{ title: otherDay, start_date: '2099-04-02', end_date: '2099-04-02', start_time: null }
+	]);
+	try {
+		await page.goto('/admin/events');
+
+		const heading = page.getByRole('heading', { name: /Apr 1, 2099/ });
+		await expect(heading).toBeVisible();
+		// Everything between this heading and the next one belongs to that day.
+		const day1 = heading.locator('xpath=following-sibling::ul[1]');
+		const rowTitles = await day1.locator('.title').allTextContents();
+		expect(rowTitles).toEqual([morning, evening]);
+
+		await expect(page.getByRole('heading', { name: /Apr 2, 2099/ })).toBeVisible();
 	} finally {
 		await deleteTestEvents(ids);
 	}

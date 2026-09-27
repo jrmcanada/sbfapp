@@ -10,7 +10,7 @@ function toIsoDate(date: Date): string {
 
 /** Events with a start_time sort chronologically before ones without,
  * which keep whatever order they were given in (stable sort). */
-function byStartTime(a: CalendarEvent, b: CalendarEvent): number {
+function byStartTime<T extends { start_time: string | null }>(a: T, b: T): number {
 	if (a.start_time === b.start_time) return 0;
 	if (a.start_time === null) return 1;
 	if (b.start_time === null) return -1;
@@ -82,4 +82,31 @@ export function splitByToday<T extends { start_date: string; end_date: string }>
 		.filter((e) => e.end_date < today)
 		.sort((a, b) => b.start_date.localeCompare(a.start_date));
 	return { upcoming, past };
+}
+
+export type DayGroup<T> = { date: string; events: T[] };
+
+/**
+ * Buckets a list into one group per distinct start_date, in the order each
+ * date first appears (so it works for both `upcoming`'s ascending order and
+ * `past`'s descending order), each group's events chronological by time.
+ */
+export function groupEventsByDay<T extends { start_date: string; start_time: string | null }>(
+	events: T[]
+): DayGroup<T>[] {
+	const groups: DayGroup<T>[] = [];
+	const indexByDate = new Map<string, number>();
+
+	for (const event of events) {
+		let index = indexByDate.get(event.start_date);
+		if (index === undefined) {
+			index = groups.length;
+			indexByDate.set(event.start_date, index);
+			groups.push({ date: event.start_date, events: [] });
+		}
+		groups[index].events.push(event);
+	}
+
+	for (const group of groups) group.events.sort(byStartTime);
+	return groups;
 }

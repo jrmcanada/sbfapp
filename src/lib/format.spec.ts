@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDay, formatTime12h, todayInChurchZone } from './format';
+import {
+	formatDate,
+	formatDay,
+	formatDayHeading,
+	formatTime12h,
+	todayInChurchZone
+} from './format';
 
 describe('formatDate', () => {
 	it('uses the church timezone, not the runtime one', () => {
@@ -11,6 +17,12 @@ describe('formatDate', () => {
 describe('formatDay', () => {
 	it('never shifts a date-only value by timezone', () => {
 		expect(formatDay('2026-09-27')).toBe('Sep 27, 2026');
+	});
+});
+
+describe('formatDayHeading', () => {
+	it('includes the weekday and never shifts by timezone', () => {
+		expect(formatDayHeading('2026-09-27')).toBe('Sunday, Sep 27, 2026');
 	});
 });
 

@@ -16,6 +16,15 @@
 
 ## Done
 
+- **Group admin events by day** (2026-09-27). `/admin/events`'s Upcoming/Past
+  lists now show a day heading (e.g. "SUNDAY, SEP 27, 2026") above each
+  date's events, chronological by time within the day
+  (`groupEventsByDay` in calendar.ts, reusing the same time-sort as the
+  calendar grid). The row itself only adds what the heading doesn't say —
+  the end date for a multi-day event, and the time. Shown to the human as
+  a mockup with reorder arrows (an earlier option that wasn't chosen);
+  confirmed grouping only, no arrows.
+
 - **Event start time + editing** (2026-09-27, `docs/specs/02-calendar/spec.md`
   revision). `events.start_time` (nullable Postgres `time`, migration
   applied by the human). Upload format gains a `HH:MM` field (24-hour, or

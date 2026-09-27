@@ -27,6 +27,17 @@ export function formatDay(isoDate: string): string {
 	});
 }
 
+/** Formats a date-only value with its weekday, e.g. "Sunday, Sep 27, 2026". */
+export function formatDayHeading(isoDate: string): string {
+	return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-CA', {
+		weekday: 'long',
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+}
+
 /**
  * Formats a wall-clock time ("HH:MM" or "HH:MM:SS", as Postgres returns a
  * `time` column) as 12-hour with AM/PM, e.g. "11:15 AM". Pure string math —

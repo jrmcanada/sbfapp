@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	formatMonthParam,
 	getMonthGrid,
+	groupEventsByDay,
 	monthLabel,
 	parseMonthParam,
 	shiftMonth,
@@ -175,5 +176,45 @@ describe('splitByToday', () => {
 		);
 		expect(upcoming.map((e) => e.id).sort()).toEqual(['running', 'today']);
 		expect(past).toEqual([]);
+	});
+});
+
+describe('groupEventsByDay', () => {
+	const ev = (id: string, start_date: string, start_time: string | null) => ({
+		id,
+		start_date,
+		start_time
+	});
+
+	it("buckets events by start_date, preserving each date's first-seen order", () => {
+		const groups = groupEventsByDay([
+			ev('a', '2026-09-27', null),
+			ev('b', '2026-09-30', null),
+			ev('c', '2026-09-27', null)
+		]);
+		expect(groups.map((g) => g.date)).toEqual(['2026-09-27', '2026-09-30']);
+		expect(groups[0].events.map((e) => e.id)).toEqual(['a', 'c']);
+		expect(groups[1].events.map((e) => e.id)).toEqual(['b']);
+	});
+
+	it("sorts each day's events chronologically, untimed last", () => {
+		const groups = groupEventsByDay([
+			ev('untimed', '2026-09-27', null),
+			ev('evening', '2026-09-27', '18:00'),
+			ev('morning', '2026-09-27', '09:00')
+		]);
+		expect(groups[0].events.map((e) => e.id)).toEqual(['morning', 'evening', 'untimed']);
+	});
+
+	it('preserves descending date order, as splitByToday gives past events', () => {
+		const groups = groupEventsByDay([
+			ev('recent', '2026-09-20', null),
+			ev('old', '2026-01-01', null)
+		]);
+		expect(groups.map((g) => g.date)).toEqual(['2026-09-20', '2026-01-01']);
+	});
+
+	it('returns nothing for an empty list', () => {
+		expect(groupEventsByDay([])).toEqual([]);
 	});
 });
