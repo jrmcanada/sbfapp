@@ -16,7 +16,7 @@
 
 	<div class="heading">
 		<h1>Welcome back</h1>
-		<p>What's happening at Sudbury Bible Fellowship?</p>
+		<p>Yo, Mike!</p>
 	</div>
 
 	<div class="cards">
