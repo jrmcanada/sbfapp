@@ -2,42 +2,20 @@
 	import { browser } from '$app/environment';
 	import { Bell, BellOff, BellRing } from 'lucide-svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
-	import { isIOS, isStandalone } from '$lib/platform';
 	import {
-		getCurrentSubscription,
-		pushSupported,
+		getPushStatus,
 		subscribeToPush,
-		unsubscribeFromPush
+		unsubscribeFromPush,
+		type PushStatus
 	} from '$lib/notifications';
 
-	type Status = 'checking' | 'ios-not-installed' | 'unsupported' | 'subscribed' | 'not-subscribed';
-
-	let status = $state<Status>('checking');
+	let status = $state<PushStatus | 'checking'>('checking');
 	let busy = $state(false);
 	let error = $state<string | null>(null);
 
 	$effect(() => {
 		if (!browser) return;
-
-		const ios = isIOS(navigator.userAgent, navigator.maxTouchPoints);
-		const standalone = isStandalone(
-			(navigator as Navigator & { standalone?: boolean }).standalone,
-			window.matchMedia('(display-mode: standalone)').matches
-		);
-
-		if (ios && !standalone) {
-			status = 'ios-not-installed';
-			return;
-		}
-
-		if (!pushSupported()) {
-			status = 'unsupported';
-			return;
-		}
-
-		getCurrentSubscription().then((sub) => {
-			status = sub ? 'subscribed' : 'not-subscribed';
-		});
+		getPushStatus().then((result) => (status = result));
 	});
 
 	async function toggle() {

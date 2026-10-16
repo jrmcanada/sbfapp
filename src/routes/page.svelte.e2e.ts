@@ -29,7 +29,7 @@ test('an admin sees Admin and Send Notification, below the Notifications card', 
 		await expect(send).toHaveAttribute('href', '/admin/notifications');
 
 		const notificationsBox = await page
-			.getByRole('button', { name: /Notifications/ })
+			.getByRole('link', { name: /^Notifications/ })
 			.first()
 			.boundingBox();
 		const adminBox = await admin.boundingBox();

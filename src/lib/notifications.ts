@@ -1,4 +1,7 @@
 import { PUBLIC_VAPID_KEY } from '$env/static/public';
+import { isIOS, isStandalone } from '$lib/platform';
+
+export type PushStatus = 'ios-not-installed' | 'unsupported' | 'subscribed' | 'not-subscribed';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
 	const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -16,6 +19,18 @@ export async function getCurrentSubscription(): Promise<PushSubscription | null>
 	const registration = await navigator.serviceWorker.getRegistration('/sw.js');
 	if (!registration) return null;
 	return registration.pushManager.getSubscription();
+}
+
+/** Where this device stands on push. Browser only. */
+export async function getPushStatus(): Promise<PushStatus> {
+	const ios = isIOS(navigator.userAgent, navigator.maxTouchPoints);
+	const standalone = isStandalone(
+		(navigator as Navigator & { standalone?: boolean }).standalone,
+		window.matchMedia('(display-mode: standalone)').matches
+	);
+	if (ios && !standalone) return 'ios-not-installed';
+	if (!pushSupported()) return 'unsupported';
+	return (await getCurrentSubscription()) ? 'subscribed' : 'not-subscribed';
 }
 
 export async function subscribeToPush(): Promise<void> {

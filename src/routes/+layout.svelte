@@ -13,6 +13,7 @@
 		'/',
 		'/calendar',
 		'/messages',
+		'/notifications',
 		'/admin',
 		'/admin/accounts',
 		'/admin/events',

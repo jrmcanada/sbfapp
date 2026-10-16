@@ -16,6 +16,21 @@
 
 ## Done
 
+- **Notification history for members** (2026-10-16,
+  `docs/specs/07-notification-history/spec.md`). Home's Notifications card
+  now links to `/notifications` and shows On/Off. That page has the on/off
+  toggle (moved from Home) and the notifications sent in the last 30 days,
+  newest first, without sender names. No schema change: the server load
+  reads `notifications` with the secret-key client, like the admin page.
+  Status detection moved into `getPushStatus()` in `$lib/notifications.ts`
+  so the card and toggle share it. Branch `feat/notification-history`,
+  verified (check, lint, 94 unit + 73 e2e). Not merged yet.
+
+- **"Powered by Netlify" badge removed** (2026-10-15). Netlify injects a
+  floating badge on new free-plan sites (it covered the calendar's day
+  detail on mobile). Not in our code; the human turned it off in Netlify
+  under Project configuration → General → Powered by Netlify badge.
+
 - **Add a single event** (2026-09-27). `/admin/events` gets an "Add event"
   button opening the same field set as Edit (dates, time, title,
   description), defaulting to today's date. Shares the field markup with

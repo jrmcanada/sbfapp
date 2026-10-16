@@ -177,7 +177,8 @@ export async function insertTestPushSubscription(profileId: string): Promise<voi
 export async function insertTestNotification(
 	createdBy: string,
 	title: string,
-	body: string
+	body: string,
+	sentAt: Date = new Date()
 ): Promise<void> {
 	const res = await fetch(`${url}/rest/v1/notifications`, {
 		method: 'POST',
@@ -186,7 +187,7 @@ export async function insertTestNotification(
 			title,
 			body,
 			created_by: createdBy,
-			sent_at: new Date().toISOString()
+			sent_at: sentAt.toISOString()
 		})
 	});
 	if (!res.ok)

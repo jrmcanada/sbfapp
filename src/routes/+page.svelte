@@ -3,7 +3,7 @@
 	import { Calendar, Globe, PlayCircle, Send, Shield } from 'lucide-svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
-	import NotificationControl from '$lib/components/NotificationControl.svelte';
+	import NotificationsCard from '$lib/components/NotificationsCard.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -33,7 +33,7 @@
 			sub="Listen to recent messages"
 			href={resolve('/messages')}
 		/>
-		<NotificationControl />
+		<NotificationsCard />
 		{#if data.isAdmin}
 			<NavCard
 				icon={Shield}
