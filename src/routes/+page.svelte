@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Calendar, Globe, PlayCircle, Send, Shield } from 'lucide-svelte';
+	import { Calendar, Globe, PlayCircle, Shield } from 'lucide-svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationsCard from '$lib/components/NotificationsCard.svelte';
@@ -40,12 +40,6 @@
 				label="Admin"
 				sub="Accounts, events and notifications"
 				href={resolve('/admin')}
-			/>
-			<NavCard
-				icon={Send}
-				label="Send Notification"
-				sub="Write a message for everyone"
-				href={resolve('/admin/notifications')}
 			/>
 		{/if}
 	</div>

@@ -79,7 +79,38 @@ test('lists the last 30 days, newest first, without the sender', async ({ page }
 	await expect(page.getByText(senderName)).toHaveCount(0);
 });
 
-test('the page has the on/off control', async ({ page }) => {
+test('the on/off control says whether notifications are on', async ({ page }) => {
 	await page.goto('/notifications');
-	await expect(page.getByRole('button', { name: /notifications/i })).toBeEnabled();
+	const control = page.getByRole('button', { name: /^Notifications Off/ });
+	await expect(control).toBeEnabled();
+	await expect(control).toContainText('Tap to enable');
+});
+
+test('a member is not shown Send Notification at all', async ({ page }) => {
+	await page.goto('/notifications');
+	await expect(page.getByRole('button', { name: /^Notifications/ })).toBeVisible();
+	await expect(page.getByText('Send Notification')).toHaveCount(0);
+});
+
+test('an admin sees Send Notification below the on/off control', async ({ browser, baseURL }) => {
+	const context = await browser.newContext();
+	await signInAsTestUser(
+		context,
+		baseURL!,
+		`e2e-notif-sender-${stamp}@example.com`,
+		'TestPassword123!'
+	);
+	const page = await context.newPage();
+	await page.goto('/notifications');
+
+	const control = page.getByRole('button', { name: /^Notifications/ });
+	const send = page.getByRole('link', { name: /Send Notification/ });
+	await expect(send).toBeVisible();
+	await expect(send).toHaveAttribute('href', '/admin/notifications');
+
+	const controlBox = await control.boundingBox();
+	const sendBox = await send.boundingBox();
+	expect(sendBox!.y).toBeGreaterThan(controlBox!.y);
+
+	await context.close();
 });

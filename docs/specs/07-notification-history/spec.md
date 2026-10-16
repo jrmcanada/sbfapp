@@ -39,6 +39,16 @@ client, the same way `/admin/notifications` does. The auth gate already
 limits the route to approved members. Unsent rows (`sent_at` null) are
 excluded.
 
+## Revision (2026-10-16, confirmed with the human)
+
+- **Toggle label shows the state:** "Notifications On" or "Notifications
+  Off", with "Tap to disable" / "Tap to enable" kept below. While checking,
+  or when push isn't available (iOS not installed, unsupported browser), it
+  stays "Notifications".
+- **Send Notification moves from Home to `/notifications`,** directly under
+  the toggle, admins only (not rendered at all for members). Home keeps the
+  Admin card.
+
 ## Out of scope
 
 - Read/unread tracking, badges, or counts.

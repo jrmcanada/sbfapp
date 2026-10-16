@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { Send } from 'lucide-svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
+	import NavCard from '$lib/components/NavCard.svelte';
 	import NotificationControl from '$lib/components/NotificationControl.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { formatDateTime } from '$lib/format';
@@ -20,7 +22,17 @@
 
 	<h1>Notifications</h1>
 
-	<NotificationControl />
+	<div class="cards">
+		<NotificationControl />
+		{#if data.isAdmin}
+			<NavCard
+				icon={Send}
+				label="Send Notification"
+				sub="Write a message for everyone"
+				href={resolve('/admin/notifications')}
+			/>
+		{/if}
+	</div>
 
 	<h2>Last 30 days</h2>
 
@@ -59,6 +71,12 @@
 	h1 {
 		font-size: 1.25rem;
 		font-weight: 600;
+	}
+
+	.cards {
+		display: flex;
+		flex-direction: column;
+		gap: 0.7rem;
 	}
 
 	h2 {

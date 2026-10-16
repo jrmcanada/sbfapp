@@ -23,8 +23,13 @@
   newest first, without sender names. No schema change: the server load
   reads `notifications` with the secret-key client, like the admin page.
   Status detection moved into `getPushStatus()` in `$lib/notifications.ts`
-  so the card and toggle share it. Branch `feat/notification-history`,
-  verified (check, lint, 94 unit + 73 e2e). Not merged yet.
+  so the card and toggle share it. Verified (check, lint, 94 unit + 73
+  e2e), merged and live (`45aced1`).
+- **Notifications page tweaks** (2026-10-16, revision in the same spec).
+  Toggle reads "Notifications On" / "Notifications Off" (subtitle
+  unchanged). Send Notification moved from Home to `/notifications`, under
+  the toggle, admins only. Branch `feat/notifications-page-tweaks`,
+  verified (check, lint, 94 unit + 75 e2e).
 
 - **"Powered by Netlify" badge removed** (2026-10-15). Netlify injects a
   floating badge on new free-plan sites (it covered the calendar's day

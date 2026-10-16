@@ -54,11 +54,18 @@
 		status === 'subscribed' ? BellRing : status === 'unsupported' ? BellOff : Bell
 	);
 	const canToggle = $derived(status === 'subscribed' || status === 'not-subscribed');
+	const label = $derived(
+		status === 'subscribed'
+			? 'Notifications On'
+			: status === 'not-subscribed'
+				? 'Notifications Off'
+				: 'Notifications'
+	);
 </script>
 
 <NavCard
 	{icon}
-	label="Notifications"
+	{label}
 	{sub}
 	active={status === 'subscribed'}
 	disabled={!canToggle || busy}

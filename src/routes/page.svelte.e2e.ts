@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { deleteTestUser, ensureTestUser, signInAsTestUser } from './supabaseTestHelper';
 
-// The Admin and Send Notification cards are admin-only: they must not
-// merely be hidden, they must not be in the page at all for anyone else.
+// The Admin card is admin-only: it must not merely be hidden, it must not
+// be in the page at all for anyone else. Send Notification now lives on
+// /notifications (see notifications/page.svelte.e2e.ts), not Home.
 
-test('an admin sees Admin and Send Notification, below the Notifications card', async ({
+test('an admin sees Admin below the Notifications card, and no Send Notification', async ({
 	page,
 	context,
 	baseURL
@@ -24,18 +25,14 @@ test('an admin sees Admin and Send Notification, below the Notifications card', 
 		await expect(admin).toBeVisible();
 		await expect(admin).toHaveAttribute('href', '/admin');
 
-		const send = page.getByRole('link', { name: /Send Notification/ });
-		await expect(send).toBeVisible();
-		await expect(send).toHaveAttribute('href', '/admin/notifications');
+		await expect(page.getByText('Send Notification')).toHaveCount(0);
 
 		const notificationsBox = await page
 			.getByRole('link', { name: /^Notifications/ })
 			.first()
 			.boundingBox();
 		const adminBox = await admin.boundingBox();
-		const sendBox = await send.boundingBox();
 		expect(adminBox!.y).toBeGreaterThan(notificationsBox!.y);
-		expect(sendBox!.y).toBeGreaterThan(adminBox!.y);
 	} finally {
 		await deleteTestUser(id);
 	}
