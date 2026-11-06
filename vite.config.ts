@@ -5,6 +5,8 @@ import adapter from '@sveltejs/adapter-netlify';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// A fixed port, different from every other project, so several dev servers can run at once.
+	server: { port: 5175, strictPort: true },
 	plugins: [
 		tailwindcss(),
 		sveltekit({
